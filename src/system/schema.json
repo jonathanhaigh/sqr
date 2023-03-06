@@ -1,0 +1,340 @@
+{
+    "root_type": "SqRoot",
+    "types": [
+        {
+            "name": "SqBool",
+            "doc": "A boolean type",
+            "primitive_coercion": "PrimitiveBool",
+            "fields": [
+                {
+                    "name": "not",
+                    "doc": "logical negation",
+                    "return_type": "SqBool",
+                    "return_sequence_type": "Single",
+                    "params": []
+                }
+            ]
+        },
+        {
+            "name": "SqInt",
+            "doc": "A 64-bit signed integer",
+            "primitive_coercion": "PrimitiveInt",
+            "fields": []
+        },
+        {
+            "name": "SqString",
+            "doc": "A string of unicode characters",
+            "primitive_coercion": "PrimitiveString",
+            "fields": []
+        },
+        {
+            "name": "SqOsString",
+            "doc": "A string in the OS's encoding",
+            "primitive_coercion": "PrimitiveString",
+            "fields": []
+        },
+        {
+            "name": "SqPath",
+            "doc": "A filesystem path",
+            "primitive_coercion": "PrimitiveString",
+            "fields": [
+                {
+                    "name": "string",
+                    "doc": "Get the path as an SqString",
+                    "return_type": "SqString",
+                    "return_sequence_type": "Single",
+                    "params": []
+                },
+                {
+                    "name": "os_string",
+                    "doc": "Get the path as an SqOsString",
+                    "return_type": "SqOsString",
+                    "return_sequence_type": "Single",
+                    "params": []
+                },
+                {
+                    "name": "parent",
+                    "doc": [
+                        "Get the parent directory of the path",
+                        "Notes:",
+                        "* This is a purely lexical operation and does not access the filesystem.",
+                        "Examples:",
+                        "* The parent of \"/home/user1/file.tar.gz\" is \"/home/user1\".",
+                        "* The parent of \"/home/user1/.file\" is \"/home/user1\".",
+                        "* The parent of \"/usr/bin/sq\" is \"/usr/bin\".",
+                        "* The parent of \"/usr/bin/\" is \"/usr/bin\".",
+                        "* The parent of \"/\" is \"/\"."
+                    ],
+                    "return_type": "SqPath",
+                    "return_sequence_type": "Option",
+                    "params": []
+                },
+                {
+                    "name": "filename",
+                    "doc": [
+                        "Get the filename component of the path",
+                        "Notes:",
+                        "* This is a purely lexical operation and does not access the filesystem.",
+                        "Examples:",
+                        "* The filename of \"/home/user1/file.tar.gz\" is \"file.tar.gz\".",
+                        "* The filename of \"/home/user1/.file\" is \".file\".",
+                        "* The filename of \"/usr/bin/sq\" is \"sq\".",
+                        "* The filename of \"/usr/bin/\" is \"\".",
+                        "* The filename of \"/\" is \"\"."
+                    ],
+                    "return_type": "SqOsString",
+                    "return_sequence_type": "Option",
+                    "params": []
+                },
+                {
+                    "name": "stem",
+                    "doc": [
+                        "Get the stem component of the path",
+                        "Notes:",
+                        "* This is a purely lexical operation and does not access the filesystem.",
+                        "* The stem component of a path is the filename of the path with any extension removed.",
+                        "Examples:",
+                        "* The stem of \"/home/user1/file.tar.gz\" is \"file.tar\".",
+                        "* The stem of \"/home/user1/.file\" is \".file\".",
+                        "* The stem of \"/usr/bin/sq\" is \"sq\".",
+                        "* The stem of \"/usr/bin/\" is \"\".",
+                        "* The stem of \"/\" is \"\"."
+                    ],
+                    "return_type": "SqOsString",
+                    "return_sequence_type": "Option",
+                    "params": []
+                },
+                {
+                    "name": "exists",
+                    "doc": "Get whether the file exists or not",
+                    "return_type": "SqBool",
+                    "return_sequence_type": "Single",
+                    "params": []
+                },
+                {
+                    "name": "extension",
+                    "doc": [
+                        "Get the extension component of the path",
+                        "Notes:",
+                        "* This is a purely lexical operation and does not access the filesystem.",
+                        "* The extension component of a path is the substring starting from that last \".\"",
+                        "  in the filename of the path, if it exists, else \"\".",
+                        "  An exception is made for filenames whose only \".\" is at the start of the name:",
+                        "  the extension of \"/home/user1/.bashrc\" is \"\", not \".bashrc\".",
+                        "Examples:",
+                        "* The extension of \"/home/user1/file.tar.gz\" is \".gz\".",
+                        "* The extension of \"/home/user1/.file\" is \"\".",
+                        "* The extension of \"/usr/bin/sq\" is \"\".",
+                        "* The extension of \"/usr/bin/\" is \"\".",
+                        "* The extension of \"/\" is \"\"."
+                    ],
+                    "return_type": "SqOsString",
+                    "return_sequence_type": "Option",
+                    "params": []
+                },
+                {
+                    "name": "children",
+                    "doc": [
+                        "Get the children of the path",
+                        "Notes:",
+                        "* The special file names \".\" and \"..\" are not included."
+                    ],
+                    "return_type": "SqPath",
+                    "return_sequence_type": "Sequence",
+                    "params": [
+                        {
+                            "index": 0,
+                            "name": "recurse",
+                            "doc": "Whether recursively list children of subdirectories",
+                            "type": "PrimitiveBool",
+                            "required": false,
+                            "default_value": false
+                        },
+                        {
+                            "index": 1,
+                            "name": "follow_symlinks",
+                            "doc": "Whether to dereference symlinks",
+                            "type": "PrimitiveBool",
+                            "required": false,
+                            "default_value": false
+                        },
+                        {
+                            "index": 2,
+                            "name": "skip_permission_denied",
+                            "doc": "Whether to skip subdirectories that would otherwise cause permission errors",
+                            "type": "PrimitiveBool",
+                            "required": false,
+                            "default_value": false
+                        },
+                        {
+                            "index": 3,
+                            "name": "same_filesystem",
+                            "doc": "Do not cross filesystem boundaries",
+                            "type": "PrimitiveBool",
+                            "required": false,
+                            "default_value": false
+                        }
+                    ]
+                },
+                {
+                    "name": "parts",
+                    "doc": [
+                        "Get the elements of the path in a list",
+                        "Examples:",
+                        "* The parts of \"/home/user1/Downloads/\" are:",
+                        "  [ \"/\", \"home\", \"user1\", \"Downloads\", \"\" ]."
+                    ],
+                    "return_type": "SqOsString",
+                    "return_sequence_type": "Sequence",
+                    "params": []
+                },
+                {
+                    "name": "absolute",
+                    "doc": [
+                        "Get an absolute path that refers to the same file as this path",
+                        "Notes:",
+                        "* The returned path may still contain symlinks or the",
+                        "  special filenames \".\" and \"..\".",
+                        "Examples, where the current working directory is \"/home/user1\":",
+                        "*  \"Downloads/file.tar.gz\" -> \"/home/user1/Downloads/file.tar.gz\".",
+                        "* \".././user1/.bashrc\" -> \"/home/user1/.././user1/.bashrc\"."
+                    ],
+                    "return_type": "SqPath",
+                    "return_sequence_type": "Single",
+                    "params": []
+                },
+                {
+                    "name": "canonical",
+                    "doc": [
+                        "Get a canonical path that refers to the same file as this path",
+                        "Notes:",
+                        " * A canonical path is absolute and does not contain any symlinks",
+                        "   or the special filenames \".\" and \"..\".",
+                        "Examples, where the current working directory is \"/home/user1\":",
+                        "*  \"Downloads/file.tar.gz\" -> \"/home/user1/Downloads/file.tar.gz\".",
+                        "* \".././user1/.bashrc\" -> \"/home/user1/.bashrc\"."
+                    ],
+                    "return_type": "SqPath",
+                    "return_sequence_type": "Single",
+                    "params": []
+                },
+                {
+                    "name": "is_absolute",
+                    "doc": "Get whether the path is absolute",
+                    "return_type": "SqBool",
+                    "return_sequence_type": "Single",
+                    "params": []
+                }
+            ]
+        },
+        {
+            "name": "SqFile",
+            "doc": "A file",
+            "primitive_coercion": "PrimitiveString",
+            "fields": []
+        },
+        {
+            "name": "SqRoot",
+            "doc": [
+                "The SQ root type",
+                "The SQ root type is the entry point into the system:",
+                "all SQ Queries begin by selecting fields from the SQ root type."
+            ],
+            "primitive_coercion": "PrimitiveBool",
+            "fields": [
+                {
+                    "name": "bool",
+                    "doc": "Get an SqBool system object",
+                    "return_type": "SqBool",
+                    "return_sequence_type": "Single",
+                    "params": [
+                        {
+                            "index": 0,
+                            "name": "value",
+                            "doc": "the value of the boolean to get",
+                            "type": "PrimitiveBool",
+                            "required": false,
+                            "default_value": false
+                        }
+                    ]
+                },
+                {
+                    "name": "path",
+                    "doc": "Get an SqPath system object",
+                    "return_type": "SqPath",
+                    "return_sequence_type": "Single",
+                    "params": [
+                        {
+                            "index": 0,
+                            "name": "value",
+                            "doc": "the path to get; default is the current working directory",
+                            "type": "PrimitiveString",
+                            "required": false,
+                            "default_value": null
+                        }
+                    ]
+                },
+                {
+                    "name": "int",
+                    "doc": "Get an SqInt system object",
+                    "return_type": "SqInt",
+                    "return_sequence_type": "Single",
+                    "params": [
+                        {
+                            "index": 0,
+                            "name": "value",
+                            "doc": "the value of the integer to get",
+                            "type": "PrimitiveInt",
+                            "required": false,
+                            "default_value": 0
+                        }
+                    ]
+                },
+                {
+                    "name": "ints",
+                    "doc": [
+                        "Get a sequence of SqInt system objects",
+                        "The sequence returned is the half-open range [start, stop),",
+                        "including start but excluding stop. If step is specified, each int",
+                        "returned will be step higher than the previous int.",
+                        "Examples:",
+                        "* ints(0, 10) -> [0, 1, 2, 3, 4, 5, 6, 7, 8, 9].",
+                        "* ints(0, 10, 2) -> [0, 2, 4, 6, 8].",
+                        "* ints(-10, 0) -> [-10, -9, -8, -7, -6, -5, -4, -3, -2, -1].",
+                        "* ints(10) -> [10, 11, 12, 13, ...]",
+                        "* ints(stop=5) -> [0, 1, 2, 3, 4]",
+                        "* ints(step=5) -> [0, 5, 10, 15, 20, ...]"
+                    ],
+                    "return_type": "SqInt",
+                    "return_sequence_type": "Sequence",
+                    "params": [
+                        {
+                            "index": 0,
+                            "name": "start",
+                            "doc": "the first integer in the squence",
+                            "type": "PrimitiveInt",
+                            "required": false,
+                            "default_value": 0
+                        },
+                        {
+                            "index": 1,
+                            "name": "stop",
+                            "doc": "the upper bound for the sequence; default is no upper bound",
+                            "type": "PrimitiveInt",
+                            "required": false,
+                            "default_value": null
+                        },
+                        {
+                            "index": 2,
+                            "name": "step",
+                            "doc": "distance between each integer returned; must be > 0",
+                            "type": "PrimitiveInt",
+                            "required": false,
+                            "default_value": 1
+                        }
+                    ]
+                }
+            ]
+        }
+    ]
+}
