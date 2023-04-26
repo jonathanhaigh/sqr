@@ -510,8 +510,7 @@ impl<'es> SqValueImplementor<'es> {
                     #inner_impl
                 }
             }
-        }
-        else {
+        } else {
             quote! {
                 fn #name(&self, #param_name: &crate::fieldcall::FieldCallInfo) -> #return_type {
                     #inner_impl

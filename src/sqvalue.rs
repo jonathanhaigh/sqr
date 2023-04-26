@@ -135,7 +135,10 @@ pub type SqBValueSequence<'a> = DynSequence<'a, Result<SqBValue>>;
 
 impl<'a> SqBValueSequence<'a> {
     /// Convert an `SqValueSequence<'a, T>' into an `SqBValueSequence<'a>`.
-    pub fn from_sq_value_sequence<T>(seq: SqValueSequence<'a, T>, call_info: &'a FieldCallInfo<'a>) -> Self
+    pub fn from_sq_value_sequence<T>(
+        seq: SqValueSequence<'a, T>,
+        call_info: &'a FieldCallInfo<'a>,
+    ) -> Self
     where
         T: SqValue + 'static,
     {
