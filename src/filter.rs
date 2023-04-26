@@ -2,11 +2,11 @@
 
 use std::fmt;
 
+use crate::error::Result;
 pub use crate::filter::comparison::ComparisonFilter;
 pub use crate::filter::identity::IdentityFilter;
 pub use crate::filter::index::IndexFilter;
 pub use crate::filter::slice::SliceFilter;
-use crate::error::Result;
 use crate::sqvalue::{SqBValue, SqBValueSequence};
 
 mod comparison;

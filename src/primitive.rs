@@ -35,7 +35,6 @@ impl fmt::Display for PrimitiveKind {
     }
 }
 
-
 /// An SQ primitive value.
 ///
 /// This type is used for field call argument values and for primitive representations of SQ type

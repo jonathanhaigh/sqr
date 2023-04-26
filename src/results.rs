@@ -251,7 +251,11 @@ impl<'a, 's> WithErrorCell for SerializableSqBValueSequence<'a, 's> {
 impl<'a, 's> Serialize for SerializableSqBValueSequence<'a, 's> {
     /// Serialize the sequence of SQ values.
     fn serialize<S: Serializer>(&self, serializer: S) -> StdResult<S::Ok, S::Error> {
-        let filter = self.call_tree.info.filter().map_err(|e| self.set_and_convert_error::<S>(e))?;
+        let filter = self
+            .call_tree
+            .info
+            .filter()
+            .map_err(|e| self.set_and_convert_error::<S>(e))?;
 
         let filtered_sequence = match &filter {
             filter::Filter::SequenceToSingle(f) => {
@@ -267,7 +271,7 @@ impl<'a, 's> Serialize for SerializableSqBValueSequence<'a, 's> {
                     error: self.error,
                 }
                 .serialize(serializer);
-            },
+            }
             filter::Filter::SequenceToSequence(f) => f
                 .filter(self.take_seq())
                 .map_err(|e| self.set_and_convert_error::<S>(e))?,

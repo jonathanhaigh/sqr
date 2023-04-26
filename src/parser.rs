@@ -182,14 +182,15 @@ impl<'q> Parser<'q> {
         self.parse_dot_expression_impl(Self::parse_field_call_in_comparison)
     }
 
-    fn parse_dot_expression_impl(&mut self, field_call_parser: fn(&mut Self) -> OptResult<ast::FieldCall>) -> OptResult<ast::DotExpression> {
+    fn parse_dot_expression_impl(
+        &mut self,
+        field_call_parser: fn(&mut Self) -> OptResult<ast::FieldCall>,
+    ) -> OptResult<ast::DotExpression> {
         let mut field_calls = vec![return_none_or_err!(field_call_parser(self))];
 
         while self.accept_token(TokenKind::Dot)?.is_some() {
-            field_calls.push(
-                field_call_parser(self)?
-                    .ok_or_else(|| self.unexpected_token_error())?,
-            );
+            field_calls
+                .push(field_call_parser(self)?.ok_or_else(|| self.unexpected_token_error())?);
         }
 
         let span = Self::merge_spans(
