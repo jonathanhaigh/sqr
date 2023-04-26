@@ -16,6 +16,13 @@ impl IdentityFilter {
     }
 }
 
+impl Default for IdentityFilter {
+    /// Create a new IdentityFilter.
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl SequenceToSequenceFilter for IdentityFilter {
     fn filter<'a>(&'a self, seq: SqBValueSequence<'a>) -> Result<SqBValueSequence<'a>> {
         Ok(seq)

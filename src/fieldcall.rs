@@ -177,13 +177,13 @@ impl<'a> FieldCallInfo<'a> {
 
         Ok(match filter {
             ast::Filter::Index(int_literal) => filter::Filter::SequenceToSingle(Box::new(
-                filter::IndexFilter::new(self, &int_literal),
+                filter::IndexFilter::new(self, int_literal),
             )),
             ast::Filter::Slice(slice) => {
-                filter::Filter::SequenceToSequence(Box::new(filter::SliceFilter::new(self, &slice)))
+                filter::Filter::SequenceToSequence(Box::new(filter::SliceFilter::new(self, slice)))
             }
             ast::Filter::Comparison(comparison) => filter::Filter::SequenceToSequence(Box::new(
-                filter::ComparisonFilter::new(self, &comparison)?,
+                filter::ComparisonFilter::new(self, comparison)?,
             )),
         })
     }
@@ -295,7 +295,7 @@ impl<'a> FieldCallInfoTree<'a> {
         parent_field_schema: &'static FieldSchema,
     ) -> Result<Self> {
         Self::new_subtree(
-            &dot_expression.field_calls.as_slice(),
+            dot_expression.field_calls.as_slice(),
             None,
             parent_field_schema,
         )
@@ -307,7 +307,7 @@ impl<'a> FieldCallInfoTree<'a> {
         opt_brace_expression: Option<&'a ast::BraceExpression>,
         parent_field_schema: &'static FieldSchema,
     ) -> Result<Self> {
-        assert!(field_calls.len() > 0);
+        assert!(!field_calls.is_empty());
 
         let field_call = &field_calls[0];
         let type_schema = parent_field_schema.return_type();
