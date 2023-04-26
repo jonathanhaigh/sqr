@@ -46,13 +46,11 @@ pub trait SequenceToSequenceFilter: fmt::Debug {
     /// Note that the lifetime of the returned sequence is the intersection of the lifetimes of the
     /// filter and the original sequence. This allows the returned sequence to hold references to
     /// the filter.
-    #[must_use]
     fn filter<'a>(&'a self, seq: SqBValueSequence<'a>) -> Result<SqBValueSequence<'a>>;
 }
 
 /// A filter that filters a sequence into a single value.
 pub trait SequenceToSingleFilter: fmt::Debug {
     /// Filter a sequence into a single element.
-    #[must_use]
     fn filter(&self, seq: SqBValueSequence) -> Result<SqBValue>;
 }

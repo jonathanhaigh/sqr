@@ -199,7 +199,6 @@ pub enum CategorizedInt {
 impl TryFrom<i64> for CategorizedInt {
     type Error = Box<ConvertIntError>;
 
-    #[must_use]
     fn try_from(operand: i64) -> StdResult<Self, Self::Error> {
         if operand.is_negative() {
             Ok(Self::Negative(abs_usize(operand)?))

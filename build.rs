@@ -413,6 +413,7 @@ impl<'es> SqValueImplementor<'es> {
         let get_single_impl = Self::generate_get_impl(
             type_ext,
             quote! {get_single},
+            None,
             ReturnSequenceType::Single,
             quote! {crate::error::Result<crate::sqvalue::SqBValue>},
             quote! {|field| -> crate::sqvalue::SqBValue { Box::new(field) }},
@@ -421,6 +422,7 @@ impl<'es> SqValueImplementor<'es> {
         let get_option_impl = Self::generate_get_impl(
             type_ext,
             quote! {get_option},
+            None,
             ReturnSequenceType::Option,
             quote! {crate::error::Result<Option<crate::sqvalue::SqBValue>>},
             quote! {|opt_field| -> Option<crate::sqvalue::SqBValue> {
@@ -431,8 +433,8 @@ impl<'es> SqValueImplementor<'es> {
         let get_sequence_impl = Self::generate_get_impl(
             type_ext,
             quote! {get_sequence},
+            Some(quote! {'a}),
             ReturnSequenceType::Sequence,
-            // See the definition of 'a in generate_get_impl().
             quote! {crate::error::Result<crate::sqvalue::SqBValueSequence<'a>>},
             quote! {|seq| crate::sqvalue::SqBValueSequence::from_sq_value_sequence(seq, call_info)},
         );
@@ -468,6 +470,7 @@ impl<'es> SqValueImplementor<'es> {
     fn generate_get_impl(
         type_ext: &TypeExt,
         name: TokenStream2,
+        opt_lifetime: Option<TokenStream2>,
         return_sequence_type: ReturnSequenceType,
         return_type: TokenStream2,
         value_mapper: TokenStream2,
@@ -498,9 +501,21 @@ impl<'es> SqValueImplementor<'es> {
             quote! {call_info}
         };
 
-        quote! {
-            fn #name<'a>(&'a self, #param_name: &'a crate::fieldcall::FieldCallInfo) -> #return_type {
-                #inner_impl
+        if let Some(lifetime) = opt_lifetime {
+            quote! {
+                fn #name<#lifetime>(
+                    &#lifetime self,
+                    #param_name: &#lifetime crate::fieldcall::FieldCallInfo
+                ) -> #return_type {
+                    #inner_impl
+                }
+            }
+        }
+        else {
+            quote! {
+                fn #name(&self, #param_name: &crate::fieldcall::FieldCallInfo) -> #return_type {
+                    #inner_impl
+                }
             }
         }
     }

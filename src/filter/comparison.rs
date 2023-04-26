@@ -18,6 +18,8 @@ pub struct ComparisonFilter<'a> {
     opt_dot_expr_tree: Option<FieldCallInfoTree<'a>>,
 }
 
+type Comparator<'a> = Box<dyn Fn(&SqBValue) -> Result<bool> + 'a>;
+
 impl<'a> ComparisonFilter<'a> {
     /// Create a new filter corresponding to a comparison filter in the query.
     ///
@@ -27,7 +29,7 @@ impl<'a> ComparisonFilter<'a> {
     pub fn new(call_info: &'a FieldCallInfo, comparison_ast: &'a ast::Comparison) -> Result<Self> {
         let opt_dot_expr_tree = match &comparison_ast.opt_dot_expression {
             Some(de) => Some(FieldCallInfoTree::from_dot_expression(
-                &de,
+                de,
                 call_info.schema(),
             )?),
             None => None,
@@ -91,7 +93,7 @@ impl<'a> ComparisonFilter<'a> {
             }
         };
         if call_info_tree.children.is_empty() {
-            child.get_primitive(&info).map(Some)
+            child.get_primitive(info).map(Some)
         } else {
             assert!(call_info_tree.children.len() == 1);
             Self::evaluate_dot_expression(&child, &call_info_tree.children[0])
@@ -100,12 +102,12 @@ impl<'a> ComparisonFilter<'a> {
 
     fn left_operand(&self, value: &SqBValue) -> OptResult<Primitive> {
         match &self.opt_dot_expr_tree {
-            Some(dot_expr_tree) => Self::evaluate_dot_expression(value, &dot_expr_tree),
-            None => value.get_primitive(&self.call_info).map(Some),
+            Some(dot_expr_tree) => Self::evaluate_dot_expression(value, dot_expr_tree),
+            None => value.get_primitive(self.call_info).map(Some),
         }
     }
 
-    fn get_comparator(&'a self) -> Box<dyn Fn(&SqBValue) -> Result<bool> + 'a> {
+    fn get_comparator(&'a self) -> Comparator<'a> {
         use ast::ComparisonOperatorKind::*;
         match &self.comparison_ast.op.kind {
             Less => Box::new(|v| {

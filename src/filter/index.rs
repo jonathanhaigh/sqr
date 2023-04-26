@@ -88,13 +88,11 @@ impl<'a> IteratorIndexFilter<'a> {
         match self.parent.index()? {
             CategorizedInt::Negative(uminus_index) => {
                 let mut buff = VecDeque::new();
-                let mut len = 0usize;
-                for element in iter {
-                    if len >= uminus_index {
+                for (index, element) in iter.enumerate() {
+                    if index >= uminus_index {
                         buff.pop_front();
                     }
                     buff.push_back(element);
-                    len += 1;
                 }
 
                 if uminus_index > buff.len() {

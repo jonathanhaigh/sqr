@@ -433,12 +433,10 @@ impl<'a> IteratorSliceFilter<'a> {
         }
 
         let mut buff = VecDeque::new();
-        let mut len = 0usize;
-        for elem in iter {
-            if len + 1 >= minus_stop {
+        for (index, elem) in iter.enumerate() {
+            if index + 1 >= minus_stop {
                 buff.pop_front();
             }
-            len += 1;
             buff.push_back(elem);
         }
 
@@ -706,7 +704,7 @@ impl<'a> DoubleEndedIteratorSliceFilter<'a> {
         assert_ne!(step, 0);
         assert_ne!(minus_stop, 0);
 
-        if let Err(_) = iter.advance_back(minus_stop) {
+        if iter.advance_back(minus_stop).is_err() {
             return SqBValueSequence::empty();
         }
         SqBValueSequence::Iterator(Box::new(iter.skip(start).step_by(step)))
@@ -750,7 +748,7 @@ impl<'a> DoubleEndedIteratorSliceFilter<'a> {
         assert_ne!(minus_step, 0);
         assert_ne!(minus_start, 0);
 
-        if let Err(_) = iter.advance(stop + 1) {
+        if iter.advance(stop + 1).is_err() {
             return SqBValueSequence::empty();
         }
 

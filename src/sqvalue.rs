@@ -15,13 +15,13 @@ use crate::util::ExactSizeDoubleEndedIterator;
 /// type that declares a method for each of the type's fields that must be implemented.
 pub trait SqValue {
     /// Convert the value into an SQ primitive type.
-    fn get_primitive<'a>(&self, info: &'a FieldCallInfo) -> Result<Primitive>;
+    fn get_primitive(&self, info: &FieldCallInfo) -> Result<Primitive>;
 
     /// Call a field on this value that returns a single value.
-    fn get_single<'a>(&self, info: &'a FieldCallInfo) -> Result<SqBValue>;
+    fn get_single(&self, info: &FieldCallInfo) -> Result<SqBValue>;
 
     /// Call a field on this value that returns an optional value.
-    fn get_option<'a>(&self, info: &'a FieldCallInfo) -> Result<Option<SqBValue>>;
+    fn get_option(&self, info: &FieldCallInfo) -> Result<Option<SqBValue>>;
 
     /// Call a field on this value that returns a sequence of values.
     fn get_sequence<'a>(&'a self, info: &'a FieldCallInfo) -> Result<SqBValueSequence<'a>>;
