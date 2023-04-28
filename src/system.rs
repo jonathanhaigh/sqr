@@ -4,6 +4,7 @@ use crate::sqvalue::SqBValue;
 
 pub mod sqbool;
 pub mod sqfile;
+pub mod sqfloat;
 pub mod sqint;
 pub mod sqosstring;
 pub mod sqpath;

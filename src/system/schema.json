@@ -22,6 +22,12 @@
             "fields": []
         },
         {
+            "name": "SqFloat",
+            "doc": "A double precision floating point type",
+            "primitive_coercion": "PrimitiveFloat",
+            "fields": []
+        },
+        {
             "name": "SqString",
             "doc": "A string of unicode characters",
             "primitive_coercion": "PrimitiveString",
@@ -331,6 +337,22 @@
                             "type": "PrimitiveInt",
                             "required": false,
                             "default_value": 1
+                        }
+                    ]
+                },
+                {
+                    "name": "float",
+                    "doc": "Get an SqFloat system object",
+                    "return_type": "SqFloat",
+                    "return_sequence_type": "Single",
+                    "params": [
+                        {
+                            "index": 0,
+                            "name": "value",
+                            "doc": "the value of the float to get",
+                            "type": "PrimitiveFloat",
+                            "required": false,
+                            "default_value": 0.0
                         }
                     ]
                 },
