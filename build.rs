@@ -357,6 +357,7 @@ impl<'es> SqTypeTraitGenerator<'es> {
             .collect();
 
         quote! {
+            #[allow(non_snake_case)]
             fn #method_name(&self, #(#params)*) -> anyhow::Result<#return_type>;
         }
     }
