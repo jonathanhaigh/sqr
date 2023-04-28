@@ -1,3 +1,0 @@
-3. Look into using paste crate (https://lib.rs/crates/paste) to streamline test macro use.
-4. Use builder pattern.
-5. Configure clippy.
