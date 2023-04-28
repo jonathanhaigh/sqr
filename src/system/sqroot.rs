@@ -6,7 +6,7 @@ use anyhow::{anyhow, ensure};
 
 use crate::primitive::Primitive;
 use crate::sqvalue::SqValueSequence;
-use crate::system::{sqbool::SqBool, sqint::SqInt, sqpath::SqPath, SqRootTrait};
+use crate::system::{sqbool::SqBool, sqint::SqInt, sqpath::SqPath, SqRootTrait, sqstring::SqString};
 
 pub struct SqRoot {}
 
@@ -72,5 +72,9 @@ impl SqRootTrait for SqRoot {
             Some(s) => Box::new((start..s).step_by(step).map(|i| Ok(SqInt::new(i)))),
             None => Box::new((start..).step_by(step).map(|i| Ok(SqInt::new(i)))),
         }))
+    }
+
+    fn string(&self, value: Option<&str>) -> anyhow::Result<SqString> {
+        Ok(SqString::new(value.unwrap_or("").to_owned()))
     }
 }
