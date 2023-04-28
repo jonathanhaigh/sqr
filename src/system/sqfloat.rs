@@ -16,4 +16,3 @@ impl SqFloatTrait for SqFloat {
         Ok(Primitive::Float(self.value))
     }
 }
-

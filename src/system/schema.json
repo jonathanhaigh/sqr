@@ -34,6 +34,12 @@
             "fields": []
         },
         {
+            "name": "SqDataSize",
+            "doc": "A data size",
+            "primitive_coercion": "PrimitiveInt",
+            "fields": []
+        },
+        {
             "name": "SqOsString",
             "doc": "A string in the OS's encoding",
             "primitive_coercion": "PrimitiveString",
@@ -230,6 +236,22 @@
                     "return_type": "SqBool",
                     "return_sequence_type": "Single",
                     "params": []
+                },
+                {
+                    "name": "file",
+                    "doc": "Get the file to which the path refers",
+                    "return_type": "SqFile",
+                    "return_sequence_type": "Option",
+                    "params": [
+                        {
+                            "index": 0,
+                            "name": "follow_symlinks",
+                            "doc": "Whether to dereference symlinks",
+                            "type": "PrimitiveBool",
+                            "required": false,
+                            "default_value": true
+                        }
+                    ]
                 }
             ]
         },
@@ -237,7 +259,15 @@
             "name": "SqFile",
             "doc": "A file",
             "primitive_coercion": "PrimitiveString",
-            "fields": []
+            "fields": [
+                {
+                    "name": "size",
+                    "doc": "Get the size of the file",
+                    "return_type": "SqDataSize",
+                    "return_sequence_type": "Single",
+                    "params": []
+                }
+            ]
         },
         {
             "name": "SqRoot",
