@@ -1,17 +1,19 @@
+use std::fs::Metadata;
 use std::path::PathBuf;
 
 use anyhow::anyhow;
 
 use crate::primitive::Primitive;
-use crate::system::SqFileTrait;
+use crate::system::{sqdatasize::SqDataSize, SqFileTrait};
 
 pub struct SqFile {
+    metadata: Metadata,
     path: PathBuf,
 }
 
 impl SqFile {
-    pub fn new(path: PathBuf) -> Self {
-        Self { path }
+    pub fn new(metadata: Metadata, path: PathBuf) -> Self {
+        Self { metadata, path }
     }
 
     pub fn to_str(&self) -> anyhow::Result<&str> {
@@ -22,5 +24,9 @@ impl SqFile {
 impl SqFileTrait for SqFile {
     fn to_primitive(&self) -> anyhow::Result<Primitive> {
         Ok(Primitive::Str(self.to_str()?.to_owned()))
+    }
+
+    fn size(&self) -> anyhow::Result<SqDataSize> {
+        Ok(SqDataSize::new(self.metadata.len()))
     }
 }

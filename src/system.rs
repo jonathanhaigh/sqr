@@ -3,6 +3,7 @@
 use crate::sqvalue::SqBValue;
 
 pub mod sqbool;
+pub mod sqdatasize;
 pub mod sqfile;
 pub mod sqfloat;
 pub mod sqint;
