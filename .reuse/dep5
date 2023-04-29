@@ -1,0 +1,10 @@
+Format: https://www.debian.org/doc/packaging-manuals/copyright-format/1.0/
+Upstream-Name: sqr
+Upstream-Contact: Jonathan Haigh <jonathanhaigh@gmail.com>
+Source: https://github.com/jonathanhaigh/sqr
+
+# Sample paragraph, commented out:
+#
+# Files: src/*
+# Copyright: $YEAR $NAME <$CONTACT>
+# License: ...

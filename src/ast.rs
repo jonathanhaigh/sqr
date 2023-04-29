@@ -1,3 +1,7 @@
+// SPDX-FileCopyrightText: 2023 Jonathan Haigh <jonathanhaigh@gmail.com>
+//
+// SPDX-License-Identifier: MIT
+
 //! Structures defining the AST generated during query parsing.
 //!
 //! Each struct has a `span: SourceSpan` member pointing to the section of the query that the AST

@@ -1,3 +1,7 @@
+// SPDX-FileCopyrightText: 2023 Jonathan Haigh <jonathanhaigh@gmail.com>
+//
+// SPDX-License-Identifier: MIT
+
 //! Items relating to index filters in the query (e.g. `path.children[0]`).
 
 use std::collections::VecDeque;
