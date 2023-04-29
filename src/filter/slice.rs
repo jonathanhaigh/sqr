@@ -1,3 +1,7 @@
+// SPDX-FileCopyrightText: 2023 Jonathan Haigh <jonathanhaigh@gmail.com>
+//
+// SPDX-License-Identifier: MIT
+
 //! Items relating to slice filters in the query (e.g. `path.children[1:-1:2]`).
 
 use std::cmp;

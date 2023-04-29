@@ -1,3 +1,7 @@
+// SPDX-FileCopyrightText: 2023 Jonathan Haigh <jonathanhaigh@gmail.com>
+//
+// SPDX-License-Identifier: MIT
+
 use std::env;
 use std::io;
 use std::path::PathBuf;

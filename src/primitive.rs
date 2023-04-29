@@ -1,3 +1,7 @@
+// SPDX-FileCopyrightText: 2023 Jonathan Haigh <jonathanhaigh@gmail.com>
+//
+// SPDX-License-Identifier: MIT
+
 //! Definitions relating SQ primitive types.
 
 use std::cmp;

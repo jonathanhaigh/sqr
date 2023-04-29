@@ -1,3 +1,7 @@
+// SPDX-FileCopyrightText: 2023 Jonathan Haigh <jonathanhaigh@gmail.com>
+//
+// SPDX-License-Identifier: MIT
+
 //! Types and functions related to lexing (tokenizing) an SQ query.
 use fancy_regex::Regex;
 use miette::SourceSpan;

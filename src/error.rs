@@ -1,3 +1,7 @@
+// SPDX-FileCopyrightText: 2023 Jonathan Haigh <jonathanhaigh@gmail.com>
+//
+// SPDX-License-Identifier: MIT
+
 //! Error types.
 use miette::{Diagnostic, SourceSpan};
 use thiserror::Error as ThisError;
