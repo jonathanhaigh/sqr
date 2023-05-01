@@ -39,7 +39,7 @@ impl SqDataSizeTrait for SqDataSize {
         }
     }
 
-    fn B(&self) -> anyhow::Result<SqInt> {
+    fn b(&self) -> anyhow::Result<SqInt> {
         match i64::try_from(self.value) {
             Ok(value_i64) => Ok(SqInt::new(value_i64)),
             Err(_) => Err(anyhow!(
@@ -49,43 +49,43 @@ impl SqDataSizeTrait for SqDataSize {
         }
     }
 
-    fn KiB(&self) -> anyhow::Result<SqFloat> {
+    fn kib(&self) -> anyhow::Result<SqFloat> {
         Ok(SqFloat::new(self.value as f64 / KIB))
     }
 
-    fn kB(&self) -> anyhow::Result<SqFloat> {
+    fn kb(&self) -> anyhow::Result<SqFloat> {
         Ok(SqFloat::new(self.value as f64 / KB))
     }
 
-    fn MiB(&self) -> anyhow::Result<SqFloat> {
+    fn mib(&self) -> anyhow::Result<SqFloat> {
         Ok(SqFloat::new(self.value as f64 / MIB))
     }
 
-    fn MB(&self) -> anyhow::Result<SqFloat> {
+    fn mb(&self) -> anyhow::Result<SqFloat> {
         Ok(SqFloat::new(self.value as f64 / MB))
     }
 
-    fn GiB(&self) -> anyhow::Result<SqFloat> {
+    fn gib(&self) -> anyhow::Result<SqFloat> {
         Ok(SqFloat::new(self.value as f64 / GIB))
     }
 
-    fn GB(&self) -> anyhow::Result<SqFloat> {
+    fn gb(&self) -> anyhow::Result<SqFloat> {
         Ok(SqFloat::new(self.value as f64 / GB))
     }
 
-    fn TiB(&self) -> anyhow::Result<SqFloat> {
+    fn tib(&self) -> anyhow::Result<SqFloat> {
         Ok(SqFloat::new(self.value as f64 / TIB))
     }
 
-    fn TB(&self) -> anyhow::Result<SqFloat> {
+    fn tb(&self) -> anyhow::Result<SqFloat> {
         Ok(SqFloat::new(self.value as f64 / TB))
     }
 
-    fn PiB(&self) -> anyhow::Result<SqFloat> {
+    fn pib(&self) -> anyhow::Result<SqFloat> {
         Ok(SqFloat::new(self.value as f64 / PIB))
     }
 
-    fn PB(&self) -> anyhow::Result<SqFloat> {
+    fn pb(&self) -> anyhow::Result<SqFloat> {
         Ok(SqFloat::new(self.value as f64 / PB))
     }
 }

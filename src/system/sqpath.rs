@@ -3,10 +3,11 @@
 // SPDX-License-Identifier: MIT
 
 use std::env;
-use std::io;
 use std::path::PathBuf;
 
 use anyhow::anyhow;
+use nix::errno;
+use nix::sys::stat;
 use walkdir::WalkDir;
 
 use crate::primitive::Primitive;
@@ -128,15 +129,15 @@ impl SqPathTrait for SqPath {
     }
 
     fn file(&self, follow_symlinks: Option<bool>) -> anyhow::Result<Option<SqFile>> {
-        let metadata_result = if follow_symlinks.unwrap_or(true) {
-            self.path.metadata()
+        let stat_result = if follow_symlinks.unwrap_or(true) {
+            stat::stat(&self.path)
         } else {
-            self.path.symlink_metadata()
+            stat::lstat(&self.path)
         };
 
-        match metadata_result {
-            Ok(metadata) => Ok(Some(SqFile::new(metadata, self.path.clone()))),
-            Err(e) if e.kind() == io::ErrorKind::NotFound => Ok(None),
+        match stat_result {
+            Ok(stat) => Ok(Some(SqFile::new(stat, self.path.clone()))),
+            Err(errno::Errno::ENOENT) => Ok(None),
             Err(e) => Err(anyhow!(
                 "Failed to get file metadata for path {}: {}",
                 self.path.to_string_lossy(),
