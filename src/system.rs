@@ -9,12 +9,16 @@ use crate::sqvalue::SqBValue;
 pub mod sqbool;
 pub mod sqdatasize;
 pub mod sqfile;
+pub mod sqfilemode;
 pub mod sqfloat;
+pub mod sqgroup;
 pub mod sqint;
 pub mod sqosstring;
 pub mod sqpath;
 pub mod sqroot;
 pub mod sqstring;
+pub mod sqsystemtime;
+pub mod squser;
 
 /// Get the root field, where all queries start.
 pub fn root() -> SqBValue {

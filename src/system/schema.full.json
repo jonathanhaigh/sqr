@@ -269,7 +269,7 @@
                 {
                     "name": "atime",
                     "doc": "Get the last access time of the file",
-                    "return_type": "SqTimePoint",
+                    "return_type": "SqSystemTime",
                     "return_list": false,
                     "null": false,
                     "params": []
@@ -277,7 +277,7 @@
                 {
                     "name": "mtime",
                     "doc": "Get the last modification time of the file",
-                    "return_type": "SqTimePoint",
+                    "return_type": "SqSystemTime",
                     "return_list": false,
                     "null": false,
                     "params": []
@@ -285,7 +285,7 @@
                 {
                     "name": "ctime",
                     "doc": "Get the last status change time of the file",
-                    "return_type": "SqTimePoint",
+                    "return_type": "SqSystemTime",
                     "return_list": false,
                     "null": false,
                     "params": []
@@ -865,7 +865,7 @@
             "fields": []
         },
         {
-            "name": "SqTimePoint",
+            "name": "SqSystemTime",
             "doc": "A point in time",
             "fields": []
         },

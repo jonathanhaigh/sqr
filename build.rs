@@ -116,6 +116,26 @@ fn sq_type_str_to_path(type_str: &str) -> TokenStream2 {
     quote! {crate::system::#mod_ident::#type_ident}
 }
 
+/// Transform a field name to be a lowercased Rust identifier.
+///
+/// Note that if the name is a keyword, it will be suffixed with "0".
+fn transform_field_name(name: &str) -> String {
+    static KEYWORDS: phf::Set<&'static str> = phf::phf_set! {
+        "abstract", "as", "async", "await", "become", "box", "break", "const", "continue", "crate",
+        "do", "dyn", "else", "enum", "extern", "false", "final", "fn", "for", "if", "impl",
+        "in", "let", "loop", "macro", "match", "mod", "move", "mut", "override", "priv", "pub",
+        "ref", "return", "self", "static", "struct", "super", "trait", "true", "try", "type",
+        "typeof", "union", "unsafe", "unsized", "use", "virtual", "where", "while", "yield",
+    };
+
+    let lc_name = name.to_ascii_lowercase();
+    if KEYWORDS.contains(lc_name.as_str()) {
+        format!("{}0", lc_name)
+    } else {
+        lc_name
+    }
+}
+
 /// Generates SQ's internal schema representation from the external schema.
 struct SchemaGenerator<'es> {
     ext_schema: &'es ExtSchema,
@@ -344,7 +364,7 @@ impl<'es> SqTypeTraitGenerator<'es> {
 
     /// Generate the method declaration for a field of an SQ type.
     fn generate_trait_method(&mut self, field_ext: &FieldExt) -> TokenStream2 {
-        let method_name = format_ident!("{}", &field_ext.name);
+        let method_name = format_ident!("{}", transform_field_name(&field_ext.name));
         let base_return_type = sq_type_str_to_path(&field_ext.return_type);
         let return_type = match field_ext.return_sequence_type {
             ReturnSequenceType::Single => base_return_type,
@@ -361,7 +381,6 @@ impl<'es> SqTypeTraitGenerator<'es> {
             .collect();
 
         quote! {
-            #[allow(non_snake_case)]
             fn #method_name(&self, #(#params)*) -> anyhow::Result<#return_type>;
         }
     }
@@ -421,7 +440,7 @@ impl<'es> SqValueImplementor<'es> {
             None,
             ReturnSequenceType::Single,
             quote! {crate::error::Result<crate::sqvalue::SqBValue>},
-            quote! {|field| -> crate::sqvalue::SqBValue { Box::new(field) }},
+            quote! {|sqvalue| -> crate::sqvalue::SqBValue { Box::new(sqvalue) }},
         );
 
         let get_option_impl = Self::generate_get_impl(
@@ -430,8 +449,8 @@ impl<'es> SqValueImplementor<'es> {
             None,
             ReturnSequenceType::Option,
             quote! {crate::error::Result<Option<crate::sqvalue::SqBValue>>},
-            quote! {|opt_field| -> Option<crate::sqvalue::SqBValue> {
-                opt_field.map(|f| -> SqBValue { Box::new(f) })
+            quote! {|opt_sqvalue| -> Option<crate::sqvalue::SqBValue> {
+                opt_sqvalue.map(|v| -> SqBValue { Box::new(v) })
             }},
         );
 
@@ -526,7 +545,7 @@ impl<'es> SqValueImplementor<'es> {
 
     fn generate_dispatch_arm(field_ext: &FieldExt) -> TokenStream2 {
         let name = &field_ext.name;
-        let method_name = format_ident!("{}", &field_ext.name);
+        let method_name = format_ident!("{}", transform_field_name(&field_ext.name));
 
         let args: Vec<TokenStream2> = field_ext
             .params

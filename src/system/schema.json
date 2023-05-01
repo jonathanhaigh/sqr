@@ -34,6 +34,12 @@
             "fields": []
         },
         {
+            "name": "SqSystemTime",
+            "doc": "A point in time",
+            "primitive_coercion": "PrimitiveInt",
+            "fields": []
+        },
+        {
             "name": "SqDataSize",
             "doc": "A data size",
             "primitive_coercion": "PrimitiveInt",
@@ -339,13 +345,131 @@
             "primitive_coercion": "PrimitiveString",
             "fields": [
                 {
+                    "name": "inode",
+                    "doc": "Get the inode of the file",
+                    "return_type": "SqInt",
+                    "return_sequence_type": "Single",
+                    "params": []
+                },
+                {
                     "name": "size",
                     "doc": "Get the size of the file",
                     "return_type": "SqDataSize",
                     "return_sequence_type": "Single",
                     "params": []
+                },
+                {
+                    "name": "type",
+                    "doc": "Get the type of the file",
+                    "return_type": "SqString",
+                    "return_sequence_type": "Single",
+                    "params": []
+                },
+                {
+                    "name": "hard_link_count",
+                    "doc": "Get the number of the file's hard links",
+                    "return_type": "SqInt",
+                    "return_sequence_type": "Single",
+                    "params": []
+                },
+                {
+                    "name": "mode",
+                    "doc": "Get the mode of the file",
+                    "return_type": "SqFileMode",
+                    "return_sequence_type": "Single",
+                    "params": []
+                },
+                {
+                    "name": "atime",
+                    "doc": "Get the last access time of the file",
+                    "return_type": "SqSystemTime",
+                    "return_sequence_type": "Single",
+                    "params": []
+                },
+                {
+                    "name": "mtime",
+                    "doc": "Get the last modification time of the file",
+                    "return_type": "SqSystemTime",
+                    "return_sequence_type": "Single",
+                    "params": []
+                },
+                {
+                    "name": "ctime",
+                    "doc": "Get the last status change time of the file",
+                    "return_type": "SqSystemTime",
+                    "return_sequence_type": "Single",
+                    "params": []
+                },
+                {
+                    "name": "block_count",
+                    "doc": "Get the number of blocks allocated for the file",
+                    "return_type": "SqInt",
+                    "return_sequence_type": "Single",
+                    "null": false,
+                    "params": []
+                },
+                {
+                    "name": "user",
+                    "doc": "Get the file's user",
+                    "return_type": "SqUser",
+                    "return_sequence_type": "Single",
+                    "params": []
+                },
+                {
+                    "name": "group",
+                    "doc": "Get the file's group",
+                    "return_type": "SqGroup",
+                    "return_sequence_type": "Single",
+                    "params": []
                 }
             ]
+        },
+        {
+            "name": "SqFileMode",
+            "doc": "File mode information. I.e. permissions and SUID, SGID and sticky bits",
+            "primitive_coercion": "PrimitiveInt",
+            "fields": [
+                {
+                    "name": "permissions",
+                    "doc": "Get the permissions specified by the mode",
+                    "return_type": "SqInt",
+                    "return_sequence_type": "Single",
+                    "params": []
+                },
+                {
+                    "name": "suid",
+                    "doc": "Get whether the SUID bit is set",
+                    "return_type": "SqBool",
+                    "return_sequence_type": "Single",
+                    "params": []
+                },
+                {
+                    "name": "sgid",
+                    "doc": "Get whether the SGID bit is set",
+                    "return_type": "SqBool",
+                    "return_sequence_type": "Single",
+                    "params": []
+                },
+                {
+                    "name": "sticky",
+                    "doc": "Get whether the sticky (ISVTX) bit ist set",
+                    "return_type": "SqBool",
+                    "return_sequence_type": "Single",
+                    "params": []
+                }
+            ]
+        },
+        {
+            "name": "SqUser",
+            "doc": "A user",
+            "primitive_coercion": "PrimitiveInt",
+            "fields": []
+        },
+        {
+            "name": "SqGroup",
+            "doc": "A group",
+            "primitive_coercion": "PrimitiveInt",
+            "fields": []
         },
         {
             "name": "SqRoot",
