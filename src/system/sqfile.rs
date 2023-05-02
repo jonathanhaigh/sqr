@@ -143,11 +143,11 @@ impl SqFileTrait for SqFile {
         Ok(SqInt::new(self.stat.st_blocks))
     }
 
-    fn user(&self) -> anyhow::Result<SqUser> {
-        Ok(SqUser::new(self.stat.st_uid))
+    fn user(&self) -> anyhow::Result<Option<SqUser>> {
+        SqUser::from_uid(self.stat.st_uid)
     }
 
-    fn group(&self) -> anyhow::Result<SqGroup> {
-        Ok(SqGroup::new(self.stat.st_gid))
+    fn group(&self) -> anyhow::Result<Option<SqGroup>> {
+        SqGroup::from_gid(self.stat.st_gid)
     }
 }
