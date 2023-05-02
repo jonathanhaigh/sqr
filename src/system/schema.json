@@ -412,14 +412,14 @@
                     "name": "user",
                     "doc": "Get the file's user",
                     "return_type": "SqUser",
-                    "return_sequence_type": "Single",
+                    "return_sequence_type": "Option",
                     "params": []
                 },
                 {
                     "name": "group",
                     "doc": "Get the file's group",
                     "return_type": "SqGroup",
-                    "return_sequence_type": "Single",
+                    "return_sequence_type": "Option",
                     "params": []
                 }
             ]
@@ -463,13 +463,90 @@
             "name": "SqUser",
             "doc": "A user",
             "primitive_coercion": "PrimitiveInt",
-            "fields": []
+            "fields": [
+                {
+                    "name": "uid",
+                    "doc": "The user's ID number",
+                    "return_type": "SqInt",
+                    "return_sequence_type": "Single",
+                    "params": []
+                },
+                {
+                    "name": "username",
+                    "doc": "The user's login name",
+                    "return_type": "SqString",
+                    "return_sequence_type": "Single",
+                    "params": []
+                },
+                {
+                    "name": "group",
+                    "doc": "The user's group",
+                    "return_type": "SqGroup",
+                    "return_sequence_type": "Option",
+                    "params": []
+                },
+                {
+                    "name": "gecos",
+                    "doc": [
+                        "The user's GECOS field",
+                        "The GECOS field is a list of general information",
+                        "about the user. See",
+                        "https://en.wikipedia.org/wiki/Gecos_field for details."
+                    ],
+                    "return_type": "SqString",
+                    "return_sequence_type": "Single",
+                    "params": []
+                },
+                {
+                    "name": "name",
+                    "doc": "The user's full name",
+                    "return_type": "SqString",
+                    "return_sequence_type": "Option",
+                    "params": []
+                },
+                {
+                    "name": "home",
+                    "doc": "The user's home directory",
+                    "return_type": "SqPath",
+                    "return_sequence_type": "Option",
+                    "params": []
+                },
+                {
+                    "name": "shell",
+                    "doc": "The path to the user's shell",
+                    "return_type": "SqPath",
+                    "return_sequence_type": "Option",
+                    "params": []
+                }
+            ]
         },
         {
             "name": "SqGroup",
             "doc": "A group",
             "primitive_coercion": "PrimitiveInt",
-            "fields": []
+            "fields": [
+                {
+                    "name": "gid",
+                    "doc": "The group's ID number",
+                    "return_type": "SqInt",
+                    "return_sequence_type": "Single",
+                    "params": []
+                },
+                {
+                    "name": "name",
+                    "doc": "The group's name",
+                    "return_type": "SqString",
+                    "return_sequence_type": "Single",
+                    "params": []
+                },
+                {
+                    "name": "members",
+                    "doc": "The group's members",
+                    "return_type": "SqUser",
+                    "return_sequence_type": "Sequence",
+                    "params": []
+                }
+            ]
         },
         {
             "name": "SqRoot",
