@@ -3,6 +3,7 @@
 // SPDX-License-Identifier: MIT
 
 use anyhow::anyhow;
+use nix::unistd;
 use nix::unistd::{Uid, User};
 
 use crate::primitive::Primitive;
@@ -15,23 +16,27 @@ pub struct SqUser {
 }
 
 impl SqUser {
-    pub fn from_uid(uid: u32) -> anyhow::Result<Option<Self>> {
+    pub fn from_uid(uid: u32) -> anyhow::Result<Self> {
         match User::from_uid(Uid::from_raw(uid)) {
-            Ok(Some(user)) => Ok(Some(Self { user })),
-            Ok(None) => Ok(None),
+            Ok(Some(user)) => Ok(Self { user }),
+            Ok(None) => Err(anyhow!("User with UID {} not found", uid)),
             Err(e) => Err(anyhow!("Error getting user from UID {}: {}", uid, e)),
         }
     }
 
-    pub fn from_name(name: &str) -> anyhow::Result<Option<Self>> {
+    pub fn from_name(name: &str) -> anyhow::Result<Self> {
         match User::from_name(name) {
-            Ok(Some(user)) => Ok(Some(Self { user })),
-            Ok(None) => Ok(None),
+            Ok(Some(user)) => Ok(Self { user }),
+            Ok(None) => Err(anyhow!("User wit username {} not found", name)),
             Err(e) => Err(anyhow!("Error getting user from username {}: {}", name, e)),
         }
     }
 
-    pub fn gecos_as_string(&self) -> anyhow::Result<String> {
+    pub fn real() -> anyhow::Result<Self> {
+        Self::from_uid(unistd::getuid().as_raw())
+    }
+
+    fn gecos_as_string(&self) -> anyhow::Result<String> {
         match self.user.gecos.to_str() {
             Ok(s) => Ok(s.to_owned()),
             Err(e) => Err(anyhow!(
@@ -57,7 +62,7 @@ impl SqUserTrait for SqUser {
         Ok(SqString::new(self.user.name.clone()))
     }
 
-    fn group(&self) -> anyhow::Result<Option<SqGroup>> {
+    fn group(&self) -> anyhow::Result<SqGroup> {
         SqGroup::from_gid(self.user.gid.as_raw())
     }
 
