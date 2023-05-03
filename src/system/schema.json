@@ -412,14 +412,14 @@
                     "name": "user",
                     "doc": "Get the file's user",
                     "return_type": "SqUser",
-                    "return_sequence_type": "Option",
+                    "return_sequence_type": "Single",
                     "params": []
                 },
                 {
                     "name": "group",
                     "doc": "Get the file's group",
                     "return_type": "SqGroup",
-                    "return_sequence_type": "Option",
+                    "return_sequence_type": "Single",
                     "params": []
                 }
             ]
@@ -482,7 +482,7 @@
                     "name": "group",
                     "doc": "The user's group",
                     "return_type": "SqGroup",
-                    "return_sequence_type": "Option",
+                    "return_sequence_type": "Single",
                     "params": []
                 },
                 {
@@ -678,6 +678,62 @@
                             "type": "PrimitiveString",
                             "required": false,
                             "default_value": ""
+                        }
+                    ]
+                },
+                {
+                    "name": "user",
+                    "doc": [
+                        "Get an SqUser system object",
+                        "The user to get can be specified by either the `username` parameter or the `uid` parameter, but not both.",
+                        "If neither `username` nor `uid` are given, then the (real, not effective) user of the current process is retreived."
+                    ],
+                    "return_type": "SqUser",
+                    "return_sequence_type": "Single",
+                    "params": [
+                        {
+                            "index": 0,
+                            "name": "username",
+                            "doc": "The username of the user to get",
+                            "type": "PrimitiveString",
+                            "required": false,
+                            "default_value": null
+                        },
+                        {
+                            "index": 1,
+                            "name": "uid",
+                            "doc": "the UID of the user to get",
+                            "type": "PrimitiveInt",
+                            "required": false,
+                            "default_value": null
+                        }
+                    ]
+                },
+                {
+                    "name": "group",
+                    "doc": [
+                        "Get an SqGroup system object",
+                        "The group to get can be specified by either the `group_name` parameter or the `gid` parameter, but not both.",
+                        "If neither `grou_name` nor `gid` are given, then the (real, not effective) group of the current process is retreived."
+                    ],
+                    "return_type": "SqGroup",
+                    "return_sequence_type": "Single",
+                    "params": [
+                        {
+                            "index": 0,
+                            "name": "group_name",
+                            "doc": "The name of the group to get",
+                            "type": "PrimitiveString",
+                            "required": false,
+                            "default_value": null
+                        },
+                        {
+                            "index": 1,
+                            "name": "gid",
+                            "doc": "the GID of the group to get",
+                            "type": "PrimitiveInt",
+                            "required": false,
+                            "default_value": null
                         }
                     ]
                 }

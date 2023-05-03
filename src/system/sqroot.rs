@@ -11,7 +11,8 @@ use anyhow::{anyhow, ensure};
 use crate::primitive::Primitive;
 use crate::sqvalue::SqValueSequence;
 use crate::system::{
-    sqbool::SqBool, sqfloat::SqFloat, sqint::SqInt, sqpath::SqPath, sqstring::SqString, SqRootTrait,
+    sqbool::SqBool, sqfloat::SqFloat, sqgroup::SqGroup, sqint::SqInt, sqpath::SqPath,
+    sqstring::SqString, squser::SqUser, SqRootTrait,
 };
 
 pub struct SqRoot {}
@@ -86,5 +87,51 @@ impl SqRootTrait for SqRoot {
 
     fn float(&self, value: Option<f64>) -> anyhow::Result<SqFloat> {
         Ok(SqFloat::new(value.unwrap_or(0f64)))
+    }
+
+    fn user(&self, opt_username: Option<&str>, opt_uid: Option<i64>) -> anyhow::Result<SqUser> {
+        if let Some(username) = opt_username {
+            if opt_uid.is_some() {
+                return Err(anyhow!(
+                    "At most one of the `username` and `uid` parameters can be specified"
+                ));
+            }
+            return SqUser::from_name(username);
+        }
+        if let Some(uid) = opt_uid {
+            return match u32::try_from(uid) {
+                Ok(u32uid) => SqUser::from_uid(u32uid),
+                Err(_) => Err(anyhow!(
+                    "uid argument {} must be in the range [{},{})",
+                    uid,
+                    0,
+                    u32::MAX
+                )),
+            };
+        }
+        SqUser::real()
+    }
+
+    fn group(&self, opt_group_name: Option<&str>, opt_gid: Option<i64>) -> anyhow::Result<SqGroup> {
+        if let Some(group_name) = opt_group_name {
+            if opt_gid.is_some() {
+                return Err(anyhow!(
+                    "At most one of the `group_name` and `gid` parameters can be specified"
+                ));
+            }
+            return SqGroup::from_name(group_name);
+        }
+        if let Some(gid) = opt_gid {
+            return match u32::try_from(gid) {
+                Ok(u32gid) => SqGroup::from_gid(u32gid),
+                Err(_) => Err(anyhow!(
+                    "gid argument {} must be in the range [{},{})",
+                    gid,
+                    0,
+                    u32::MAX
+                )),
+            };
+        }
+        SqGroup::real()
     }
 }
