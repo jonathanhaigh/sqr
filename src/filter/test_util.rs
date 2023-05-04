@@ -6,6 +6,9 @@ use strum_macros::{EnumIter, FromRepr};
 
 use crate::ast;
 use crate::error::Result;
+use crate::fieldcall::FieldCallInfo;
+use crate::primitive::Primitive;
+use crate::schema;
 use crate::sqvalue::{SqBValue, SqBValueSequence};
 use crate::system::sqint::SqInt;
 
@@ -41,6 +44,22 @@ pub fn gen_test_sequence(seq_type: SequenceType, len: usize) -> SqBValueSequence
             ))
         }
     }
+}
+
+pub fn seq_to_vec_of_opt_prims(seq: SqBValueSequence) -> Vec<Option<Primitive>> {
+    let field_call_ast = fake_field_call_ast();
+    let call_info = FieldCallInfo::new(&field_call_ast, schema::root_field());
+    seq.map(|result| result.ok().map(|v| v.get_primitive(&call_info).unwrap()))
+        .collect::<Vec<_>>()
+}
+
+pub fn assert_eq_sqbvalueseq_elements(a: SqBValueSequence, b: SqBValueSequence) {
+    assert_eq!(seq_to_vec_of_opt_prims(a), seq_to_vec_of_opt_prims(b));
+}
+
+pub fn assert_eq_sqbvalueseqs(a: SqBValueSequence, b: SqBValueSequence) {
+    assert_eq!(std::mem::discriminant(&a), std::mem::discriminant(&b));
+    assert_eq_sqbvalueseq_elements(a, b);
 }
 
 pub fn fake_int_literal(value: i64) -> ast::IntLiteral {

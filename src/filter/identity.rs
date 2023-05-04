@@ -32,3 +32,37 @@ impl SequenceToSequenceFilter for IdentityFilter {
         Ok(seq)
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::filter::test_util::{assert_eq_sqbvalueseqs, gen_test_sequence, SequenceType};
+
+    macro_rules! identity_filter_test {
+        ($name:ident, $seq_type:ident, $seq_len:expr) => {
+            #[test]
+            fn $name() {
+                let seq = gen_test_sequence(SequenceType::$seq_type, $seq_len);
+                let expected = gen_test_sequence(SequenceType::$seq_type, $seq_len);
+                let filter = IdentityFilter::new();
+                let filtered = filter.filter(seq).unwrap();
+                assert_eq_sqbvalueseqs(filtered, expected);
+            }
+        };
+    }
+
+    identity_filter_test!(iter_identity_empty, Iterator, 0);
+    identity_filter_test!(es_iter_identity_empty, ExactSizeIterator, 0);
+    identity_filter_test!(de_iter_identity_empty, DoubleEndedIterator, 0);
+    identity_filter_test!(esde_iter_identity_empty, ExactSizeDoubleEndedIterator, 0);
+
+    identity_filter_test!(iter_identity_single, Iterator, 1);
+    identity_filter_test!(es_iter_identity_single, ExactSizeIterator, 1);
+    identity_filter_test!(de_iter_identity_single, DoubleEndedIterator, 1);
+    identity_filter_test!(esde_iter_identity_single, ExactSizeDoubleEndedIterator, 1);
+
+    identity_filter_test!(iter_identity_ten, Iterator, 10);
+    identity_filter_test!(es_iter_identity_ten, ExactSizeIterator, 10);
+    identity_filter_test!(de_iter_identity_ten, DoubleEndedIterator, 10);
+    identity_filter_test!(esde_iter_identity_ten, ExactSizeDoubleEndedIterator, 10);
+}
