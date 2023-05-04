@@ -217,9 +217,6 @@ mod tests {
     use crate::primitive::Primitive;
     use crate::schema;
 
-    // --------------------------------------------------------------------------------------------
-    // IndexFilter tests
-    // --------------------------------------------------------------------------------------------
     macro_rules! index_test {
         ($name:ident, $seq_type:ident, $seq_len:expr, $index:expr, $expected:expr) => {
             #[test]
