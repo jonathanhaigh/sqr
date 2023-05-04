@@ -149,7 +149,7 @@ impl<'a> FieldCallInfo<'a> {
             if let Some(named_arg) = opt_named_arg {
                 &named_arg.literal
             } else {
-                return Err(self.arg_missing_error(name));
+                return Ok(None);
             }
         };
 
