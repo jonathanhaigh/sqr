@@ -2,6 +2,7 @@
 //
 // SPDX-License-Identifier: MIT
 
+use pretty_assertions::assert_eq;
 use strum_macros::{EnumIter, FromRepr};
 
 use crate::ast;

@@ -211,3 +211,331 @@ impl TryFrom<i64> for CategorizedInt {
         }
     }
 }
+
+#[cfg(test)]
+mod tests {
+
+    use std::result::Result as StdResult;
+
+    use pretty_assertions::assert_eq;
+
+    use super::*;
+    use CategorizedInt::*;
+
+    // --------------------------------------------------------------------------------------------
+    // return_none_or_err tests
+    // --------------------------------------------------------------------------------------------
+
+    fn return_none_or_err_test_helper(
+        v: Result<Option<bool>, bool>,
+    ) -> StdResult<Option<bool>, bool> {
+        let res = return_none_or_err!(v);
+        Ok(Some(res))
+    }
+
+    #[test]
+    fn return_none_or_err_none() {
+        assert_eq!(return_none_or_err_test_helper(Ok(None)), Ok(None));
+    }
+
+    #[test]
+    fn return_none_or_err_err() {
+        assert_eq!(return_none_or_err_test_helper(Err(false)), Err(false));
+    }
+
+    #[test]
+    fn return_none_or_err_some() {
+        assert_eq!(
+            return_none_or_err_test_helper(Ok(Some(true))),
+            Ok(Some(true))
+        );
+    }
+
+    // --------------------------------------------------------------------------------------------
+    // convert int tests
+    // --------------------------------------------------------------------------------------------
+
+    macro_rules! convert_int_test {
+        ($name:ident, $to:ty, $from:ty, $num:expr, $expected:expr) => {
+            #[test]
+            fn $name() {
+                assert_eq!(convert_int::<$to, $from>($num).unwrap(), $expected);
+            }
+        };
+    }
+
+    macro_rules! convert_int_test_err {
+        ($name:ident, $to:ty, $from:ty, $num:expr) => {
+            #[test]
+            fn $name() {
+                assert!(convert_int::<$to, $from>($num).is_err());
+            }
+        };
+    }
+
+    // i64 to usize
+    //
+    convert_int_test!(convert_i64_0_to_usize, usize, i64, 0i64, 0usize);
+
+    #[cfg(target_pointer_width = "64")]
+    convert_int_test!(
+        convert_i64_max_to_usize,
+        usize,
+        i64,
+        i64::MAX,
+        9_223_372_036_854_775_807usize
+    );
+
+    #[cfg(target_pointer_width = "32")]
+    convert_int_test_err!(convert_i64_max_to_usize, usize, i64, i64::MAX);
+
+    convert_int_test_err!(convert_i64_min_to_usize, usize, i64, i64::MIN);
+    convert_int_test_err!(convert_i64_minus1_to_usize, usize, i64, -1i64);
+
+    // usize to i64
+    //
+    convert_int_test!(convert_usize_0_to_i64, i64, usize, 0, 0i64);
+
+    #[cfg(target_pointer_width = "32")]
+    convert_int_test!(
+        convert_usize_max_to_i64,
+        i64,
+        usize,
+        usize::MAX,
+        4_294_967_295i64
+    );
+
+    #[cfg(target_pointer_width = "64")]
+    convert_int_test_err!(convert_usize_max_to_i64, i64, usize, usize::MAX);
+
+    // --------------------------------------------------------------------------------------------
+    // abs tests
+    // --------------------------------------------------------------------------------------------
+
+    macro_rules! abs_test {
+        ($name:ident, $value:expr, $abs:expr) => {
+            #[test]
+            fn $name() {
+                assert_eq!(abs($value), $abs);
+            }
+        };
+    }
+
+    abs_test!(abs_0i64, 0i64, 0u64);
+    abs_test!(abs_1i64, 1i64, 1u64);
+    abs_test!(abs_minus1i64, -1i64, 1u64);
+    abs_test!(abs_i64_max, i64::MAX, 9_223_372_036_854_775_807u64);
+    abs_test!(abs_i64_min, i64::MIN, 9_223_372_036_854_775_808u64);
+
+    // --------------------------------------------------------------------------------------------
+    // abs_usize tests
+    // --------------------------------------------------------------------------------------------
+    macro_rules! abs_usize_test {
+        ($name:ident, $value:expr, $abs:expr) => {
+            #[test]
+            fn $name() {
+                assert_eq!(abs_usize($value).unwrap(), $abs);
+            }
+        };
+    }
+
+    macro_rules! abs_usize_test_err {
+        ($name:ident, $value:expr, $abs:expr) => {
+            #[test]
+            fn $name() {
+                assert!(abs_usize($value).is_err());
+            }
+        };
+    }
+
+    abs_usize_test!(abs_usize_0i64, 0i64, 0usize);
+    abs_usize_test!(abs_usize_1i64, 1i64, 1usize);
+    abs_usize_test!(abs_usize_minus1i64, -1i64, 1usize);
+    abs_usize_test!(abs_usize_i64_32max, 2_147_483_647i64, 2_147_483_647usize);
+    abs_usize_test!(abs_usize_i64_32min, -2_147_483_648i64, 2_147_483_648usize);
+
+    #[cfg(target_pointer_width = "64")]
+    abs_usize_test!(abs_usize_i64_max, i64::MAX, 9_223_372_036_854_775_807usize);
+
+    #[cfg(target_pointer_width = "32")]
+    abs_usize_test_err!(abs_usize_i64_max, i64::MAX);
+
+    #[cfg(target_pointer_width = "64")]
+    abs_usize_test!(abs_usize_i64_min, i64::MIN, 9_223_372_036_854_775_808usize);
+
+    #[cfg(target_pointer_width = "32")]
+    abs_usize_test_err!(abs_usize_i64_min, i64::MIN);
+
+    // --------------------------------------------------------------------------------------------
+    // IterTools::nth_or_len tests
+    // --------------------------------------------------------------------------------------------
+    macro_rules! nth_or_len_test {
+        ($name:ident, $seq_len:expr, $n: expr, $nth:expr) => {
+            #[test]
+            fn $name() {
+                assert_eq!((0..$seq_len).nth_or_len($n).unwrap(), $nth);
+            }
+        };
+    }
+
+    macro_rules! nth_or_len_test_err {
+        ($name:ident, $seq_len:expr, $n: expr) => {
+            #[test]
+            fn $name() {
+                assert_eq!((0..$seq_len).nth_or_len($n).unwrap_err(), $seq_len);
+            }
+        };
+    }
+    nth_or_len_test!(nth_or_len_0th_of_10, 10, 0, 0);
+    nth_or_len_test!(nth_or_len_1th_of_10, 10, 1, 1);
+    nth_or_len_test!(nth_or_len_9th_of_10, 10, 9, 9);
+    nth_or_len_test_err!(nth_or_len_10th_of_10, 10, 10);
+    nth_or_len_test_err!(nth_or_len_100th_of_10, 10, 100);
+
+    // --------------------------------------------------------------------------------------------
+    // IterTools::nth_back_or_len tests
+    // --------------------------------------------------------------------------------------------
+    macro_rules! nth_back_or_len_test {
+        ($name:ident, $seq_len:expr, $n: expr, $nth:expr) => {
+            #[test]
+            fn $name() {
+                assert_eq!((0..$seq_len).nth_back_or_len($n).unwrap(), $nth);
+            }
+        };
+    }
+
+    macro_rules! nth_back_or_len_test_err {
+        ($name:ident, $seq_len:expr, $n: expr) => {
+            #[test]
+            fn $name() {
+                assert_eq!((0..$seq_len).nth_back_or_len($n).unwrap_err(), $seq_len);
+            }
+        };
+    }
+    nth_back_or_len_test!(nth_back_or_len_0th_of_10, 10, 0, 9);
+    nth_back_or_len_test!(nth_back_or_len_1th_of_10, 10, 1, 8);
+    nth_back_or_len_test!(nth_back_or_len_9th_of_10, 10, 9, 0);
+    nth_back_or_len_test_err!(nth_back_or_len_10th_of_10, 10, 10);
+    nth_back_or_len_test_err!(nth_back_or_len_100th_of_10, 10, 100);
+
+    // --------------------------------------------------------------------------------------------
+    // IterTools::advance tests
+    // --------------------------------------------------------------------------------------------
+    macro_rules! advance_test {
+        ($name:ident, $seq_len:expr, $n:expr, $next:expr) => {
+            #[test]
+            fn $name() {
+                let mut it = 0..$seq_len;
+                assert!(it.advance($n).is_ok());
+                assert_eq!(it.next(), $next);
+            }
+        };
+    }
+
+    macro_rules! advance_test_err {
+        ($name:ident, $seq_len:expr, $n:expr) => {
+            #[test]
+            fn $name() {
+                let mut it = 0..$seq_len;
+                assert_eq!(it.advance($n).unwrap_err(), $seq_len);
+                assert_eq!(it.next(), None);
+            }
+        };
+    }
+
+    advance_test!(advance_0th_of_10, 10, 0, Some(0));
+    advance_test!(advance_1th_of_10, 10, 1, Some(1));
+    advance_test!(advance_9th_of_10, 10, 9, Some(9));
+    advance_test!(advance_10th_of_10, 10, 10, None);
+    advance_test_err!(advance_11th_of_10, 10, 11);
+    advance_test_err!(advance_100th_of_10, 10, 100);
+
+    // --------------------------------------------------------------------------------------------
+    // IterTools::advance_back tests
+    // --------------------------------------------------------------------------------------------
+    macro_rules! advance_back_test {
+        ($name:ident, $seq_len:expr, $n:expr, $next:expr) => {
+            #[test]
+            fn $name() {
+                let mut it = 0..$seq_len;
+                assert!(it.advance_back($n).is_ok());
+                assert_eq!(it.next_back(), $next);
+            }
+        };
+    }
+
+    macro_rules! advance_back_test_err {
+        ($name:ident, $seq_len:expr, $n:expr) => {
+            #[test]
+            fn $name() {
+                let mut it = 0..$seq_len;
+                assert_eq!(it.advance_back($n).unwrap_err(), $seq_len);
+                assert_eq!(it.next_back(), None);
+            }
+        };
+    }
+
+    advance_back_test!(advance_back_0th_of_10, 10, 0, Some(9));
+    advance_back_test!(advance_back_1th_of_10, 10, 1, Some(8));
+    advance_back_test!(advance_back_9th_of_10, 10, 9, Some(0));
+    advance_back_test!(advance_back_10th_of_10, 10, 10, None);
+    advance_back_test_err!(advance_back_11th_of_10, 10, 11);
+    advance_back_test_err!(advance_back_100th_of_10, 10, 100);
+
+    // --------------------------------------------------------------------------------------------
+    // CategorizedInt::try_from tests
+    // --------------------------------------------------------------------------------------------
+
+    macro_rules! categorized_int_try_from_test {
+        ($name:ident, $value:expr, $expected:expr) => {
+            #[test]
+            fn $name() {
+                assert_eq!(CategorizedInt::try_from($value).unwrap(), $expected);
+            }
+        };
+    }
+
+    macro_rules! categorized_int_try_from_test_err {
+        ($name:ident, $value:expr) => {
+            #[test]
+            fn $name() {
+                assert!(CategorizedInt::try_from($value).is_err());
+            }
+        };
+    }
+
+    categorized_int_try_from_test!(categorized_int_try_from_0, 0, NonNegative(0));
+    categorized_int_try_from_test!(categorized_int_try_from_1, 1, NonNegative(1));
+    categorized_int_try_from_test!(
+        categorized_int_try_from_i64_i32_max,
+        2_147_483_647i64,
+        NonNegative(2_147_483_647usize)
+    );
+
+    #[cfg(target_pointer_width = "64")]
+    categorized_int_try_from_test!(
+        categorized_int_try_from_i64_max,
+        i64::MAX,
+        NonNegative(9_223_372_036_854_775_807usize)
+    );
+
+    #[cfg(target_pointer_width = "32")]
+    categorized_int_try_from_test_err!(categorized_int_try_from_i64_max, i64::MAX);
+
+    categorized_int_try_from_test!(categorized_int_try_from_minus1, -1, Negative(1));
+    categorized_int_try_from_test!(
+        categorized_int_try_from_i64_i32_min,
+        -2_147_483_648i64,
+        Negative(2_147_483_648usize)
+    );
+
+    #[cfg(target_pointer_width = "64")]
+    categorized_int_try_from_test!(
+        categorized_int_try_from_i64_min,
+        i64::MIN,
+        Negative(9_223_372_036_854_775_808usize)
+    );
+
+    #[cfg(target_pointer_width = "32")]
+    categorized_int_try_from_test_err!(categorized_int_try_from_i64_min, i64::MIN);
+}
