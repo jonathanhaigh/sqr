@@ -215,12 +215,30 @@ impl TryFrom<i64> for CategorizedInt {
 #[cfg(test)]
 mod tests {
 
+    use std::fmt;
     use std::result::Result as StdResult;
 
     use pretty_assertions::assert_eq;
+    use rstest::rstest;
 
     use super::*;
     use CategorizedInt::*;
+
+    fn none_on_32_bit_arch<T>(v: T) -> Option<T> {
+        if cfg!(target_pointer_width = "32") {
+            None
+        } else {
+            Some(v)
+        }
+    }
+
+    fn none_on_64_bit_arch<T>(v: T) -> Option<T> {
+        if cfg!(target_pointer_width = "64") {
+            None
+        } else {
+            Some(v)
+        }
+    }
 
     // --------------------------------------------------------------------------------------------
     // return_none_or_err tests
@@ -233,309 +251,187 @@ mod tests {
         Ok(Some(res))
     }
 
-    #[test]
-    fn return_none_or_err_none() {
-        assert_eq!(return_none_or_err_test_helper(Ok(None)), Ok(None));
-    }
-
-    #[test]
-    fn return_none_or_err_err() {
-        assert_eq!(return_none_or_err_test_helper(Err(false)), Err(false));
-    }
-
-    #[test]
-    fn return_none_or_err_some() {
-        assert_eq!(
-            return_none_or_err_test_helper(Ok(Some(true))),
-            Ok(Some(true))
-        );
+    #[rstest]
+    #[case::ok_none(Ok(None), Ok(None))]
+    #[case::err(Err(false), Err(false))]
+    #[case::ok_some(Ok(Some(true)), Ok(Some(true)))]
+    fn test_return_none_or_err(
+        #[case] input: StdResult<Option<bool>, bool>,
+        #[case] expected: StdResult<Option<bool>, bool>,
+    ) {
+        assert_eq!(return_none_or_err_test_helper(input), expected);
     }
 
     // --------------------------------------------------------------------------------------------
     // convert int tests
     // --------------------------------------------------------------------------------------------
 
-    macro_rules! convert_int_test {
-        ($name:ident, $to:ty, $from:ty, $num:expr, $expected:expr) => {
-            #[test]
-            fn $name() {
-                assert_eq!(convert_int::<$to, $from>($num).unwrap(), $expected);
-            }
-        };
+    #[rstest]
+    #[case::i64_0_to_usize(0i64, Some(0usize))]
+    #[case::i64_max_to_usize(i64::MAX, none_on_32_bit_arch(9_223_372_036_854_775_807usize))]
+    #[case::i64_min_to_usize(i64::MIN, Option::<usize>::None)]
+    #[case::i64_minus1_to_usize(-1i64, Option::<usize>::None)]
+    #[case::usize_0_to_i64(0usize, Some(0i64))]
+    #[case::usize_max_to_i64(usize::MAX, none_on_64_bit_arch(0i64))]
+    fn test_convert_int<To, Input>(#[case] input: Input, #[case] expected: Option<To>)
+    where
+        To: Copy + ToString + TryFrom<Input> + PartialEq + fmt::Debug,
+        Input: Copy + ToString,
+    {
+        match expected {
+            Some(output) => assert_eq!(convert_int::<To, Input>(input).unwrap(), output),
+            None => assert!(convert_int::<To, Input>(input).is_err()),
+        }
     }
-
-    macro_rules! convert_int_test_err {
-        ($name:ident, $to:ty, $from:ty, $num:expr) => {
-            #[test]
-            fn $name() {
-                assert!(convert_int::<$to, $from>($num).is_err());
-            }
-        };
-    }
-
-    // i64 to usize
-    //
-    convert_int_test!(convert_i64_0_to_usize, usize, i64, 0i64, 0usize);
-
-    #[cfg(target_pointer_width = "64")]
-    convert_int_test!(
-        convert_i64_max_to_usize,
-        usize,
-        i64,
-        i64::MAX,
-        9_223_372_036_854_775_807usize
-    );
-
-    #[cfg(target_pointer_width = "32")]
-    convert_int_test_err!(convert_i64_max_to_usize, usize, i64, i64::MAX);
-
-    convert_int_test_err!(convert_i64_min_to_usize, usize, i64, i64::MIN);
-    convert_int_test_err!(convert_i64_minus1_to_usize, usize, i64, -1i64);
-
-    // usize to i64
-    //
-    convert_int_test!(convert_usize_0_to_i64, i64, usize, 0, 0i64);
-
-    #[cfg(target_pointer_width = "32")]
-    convert_int_test!(
-        convert_usize_max_to_i64,
-        i64,
-        usize,
-        usize::MAX,
-        4_294_967_295i64
-    );
-
-    #[cfg(target_pointer_width = "64")]
-    convert_int_test_err!(convert_usize_max_to_i64, i64, usize, usize::MAX);
 
     // --------------------------------------------------------------------------------------------
     // abs tests
     // --------------------------------------------------------------------------------------------
 
-    macro_rules! abs_test {
-        ($name:ident, $value:expr, $abs:expr) => {
-            #[test]
-            fn $name() {
-                assert_eq!(abs($value), $abs);
-            }
-        };
+    #[rstest]
+    #[case::zero(0i64, 0u64)]
+    #[case::one(1i64, 1u64)]
+    #[case::minus_one(-1i64, 1u64)]
+    #[case::max(i64::MAX, 9_223_372_036_854_775_807u64)]
+    #[case::max(i64::MIN, 9_223_372_036_854_775_808u64)]
+    fn test_abs<To, Input>(#[case] input: Input, #[case] output: To)
+    where
+        To: fmt::Debug,
+        Input: InfallibleAbs,
+        <Input as InfallibleAbs>::Output: PartialEq<To> + fmt::Debug,
+    {
+        assert_eq!(abs(input), output);
     }
-
-    abs_test!(abs_0i64, 0i64, 0u64);
-    abs_test!(abs_1i64, 1i64, 1u64);
-    abs_test!(abs_minus1i64, -1i64, 1u64);
-    abs_test!(abs_i64_max, i64::MAX, 9_223_372_036_854_775_807u64);
-    abs_test!(abs_i64_min, i64::MIN, 9_223_372_036_854_775_808u64);
 
     // --------------------------------------------------------------------------------------------
     // abs_usize tests
     // --------------------------------------------------------------------------------------------
-    macro_rules! abs_usize_test {
-        ($name:ident, $value:expr, $abs:expr) => {
-            #[test]
-            fn $name() {
-                assert_eq!(abs_usize($value).unwrap(), $abs);
-            }
-        };
+
+    #[rstest]
+    #[case::i64_0(0, Some(0))]
+    #[case::i64_1(1, Some(1))]
+    #[case::i64_minus1(-1, Some(1))]
+    #[case::i64_32_max(2_147_483_647, Some(2_147_483_647))]
+    #[case::i64_32_min(-2_147_483_648, Some(2_147_483_648))]
+    #[case::i64_max(i64::MAX, none_on_32_bit_arch(9_223_372_036_854_775_807))]
+    #[case::i64_max(i64::MIN, none_on_32_bit_arch(9_223_372_036_854_775_808))]
+    fn test_abs_usize<Input>(#[case] input: Input, #[case] expected: Option<usize>)
+    where
+        Input: InfallibleAbs,
+        usize: TryFrom<<Input as InfallibleAbs>::Output>,
+        <Input as InfallibleAbs>::Output: ToString + Copy,
+    {
+        match expected {
+            Some(output) => assert_eq!(abs_usize(input).unwrap(), output),
+            None => assert!(abs_usize(input).is_err()),
+        }
     }
-
-    macro_rules! abs_usize_test_err {
-        ($name:ident, $value:expr, $abs:expr) => {
-            #[test]
-            fn $name() {
-                assert!(abs_usize($value).is_err());
-            }
-        };
-    }
-
-    abs_usize_test!(abs_usize_0i64, 0i64, 0usize);
-    abs_usize_test!(abs_usize_1i64, 1i64, 1usize);
-    abs_usize_test!(abs_usize_minus1i64, -1i64, 1usize);
-    abs_usize_test!(abs_usize_i64_32max, 2_147_483_647i64, 2_147_483_647usize);
-    abs_usize_test!(abs_usize_i64_32min, -2_147_483_648i64, 2_147_483_648usize);
-
-    #[cfg(target_pointer_width = "64")]
-    abs_usize_test!(abs_usize_i64_max, i64::MAX, 9_223_372_036_854_775_807usize);
-
-    #[cfg(target_pointer_width = "32")]
-    abs_usize_test_err!(abs_usize_i64_max, i64::MAX);
-
-    #[cfg(target_pointer_width = "64")]
-    abs_usize_test!(abs_usize_i64_min, i64::MIN, 9_223_372_036_854_775_808usize);
-
-    #[cfg(target_pointer_width = "32")]
-    abs_usize_test_err!(abs_usize_i64_min, i64::MIN);
 
     // --------------------------------------------------------------------------------------------
     // IterTools::nth_or_len tests
     // --------------------------------------------------------------------------------------------
-    macro_rules! nth_or_len_test {
-        ($name:ident, $seq_len:expr, $n: expr, $nth:expr) => {
-            #[test]
-            fn $name() {
-                assert_eq!((0..$seq_len).nth_or_len($n).unwrap(), $nth);
-            }
-        };
+    #[rstest]
+    #[case::get_0th_of_10(10, 0, Ok(0))]
+    #[case::get_1th_of_10(10, 1, Ok(1))]
+    #[case::get_9th_of_10(10, 9, Ok(9))]
+    #[case::get_10th_of_10(10, 10, Err(10))]
+    #[case::get_100th_of_10(10, 100, Err(10))]
+    #[case::get_0th_of_0(0, 0, Err(0))]
+    #[case::get_1th_of_0(0, 1, Err(0))]
+    fn test_nth_or_len(
+        #[case] seq_len: usize,
+        #[case] n: usize,
+        #[case] expecting: StdResult<usize, usize>,
+    ) {
+        assert_eq!((0..seq_len).nth_or_len(n), expecting);
     }
-
-    macro_rules! nth_or_len_test_err {
-        ($name:ident, $seq_len:expr, $n: expr) => {
-            #[test]
-            fn $name() {
-                assert_eq!((0..$seq_len).nth_or_len($n).unwrap_err(), $seq_len);
-            }
-        };
-    }
-    nth_or_len_test!(nth_or_len_0th_of_10, 10, 0, 0);
-    nth_or_len_test!(nth_or_len_1th_of_10, 10, 1, 1);
-    nth_or_len_test!(nth_or_len_9th_of_10, 10, 9, 9);
-    nth_or_len_test_err!(nth_or_len_10th_of_10, 10, 10);
-    nth_or_len_test_err!(nth_or_len_100th_of_10, 10, 100);
 
     // --------------------------------------------------------------------------------------------
     // IterTools::nth_back_or_len tests
     // --------------------------------------------------------------------------------------------
-    macro_rules! nth_back_or_len_test {
-        ($name:ident, $seq_len:expr, $n: expr, $nth:expr) => {
-            #[test]
-            fn $name() {
-                assert_eq!((0..$seq_len).nth_back_or_len($n).unwrap(), $nth);
-            }
-        };
+    #[rstest]
+    #[case::get_0th_of_10(10, 0, Ok(9))]
+    #[case::get_1th_of_10(10, 1, Ok(8))]
+    #[case::get_9th_of_10(10, 9, Ok(0))]
+    #[case::get_10th_of_10(10, 10, Err(10))]
+    #[case::get_100th_of_10(10, 100, Err(10))]
+    #[case::get_0th_of_0(0, 0, Err(0))]
+    #[case::get_1th_of_0(0, 1, Err(0))]
+    fn test_nth_back_or_len(
+        #[case] seq_len: usize,
+        #[case] n: usize,
+        #[case] expecting: StdResult<usize, usize>,
+    ) {
+        assert_eq!((0..seq_len).nth_back_or_len(n), expecting);
     }
-
-    macro_rules! nth_back_or_len_test_err {
-        ($name:ident, $seq_len:expr, $n: expr) => {
-            #[test]
-            fn $name() {
-                assert_eq!((0..$seq_len).nth_back_or_len($n).unwrap_err(), $seq_len);
-            }
-        };
-    }
-    nth_back_or_len_test!(nth_back_or_len_0th_of_10, 10, 0, 9);
-    nth_back_or_len_test!(nth_back_or_len_1th_of_10, 10, 1, 8);
-    nth_back_or_len_test!(nth_back_or_len_9th_of_10, 10, 9, 0);
-    nth_back_or_len_test_err!(nth_back_or_len_10th_of_10, 10, 10);
-    nth_back_or_len_test_err!(nth_back_or_len_100th_of_10, 10, 100);
 
     // --------------------------------------------------------------------------------------------
     // IterTools::advance tests
     // --------------------------------------------------------------------------------------------
-    macro_rules! advance_test {
-        ($name:ident, $seq_len:expr, $n:expr, $next:expr) => {
-            #[test]
-            fn $name() {
-                let mut it = 0..$seq_len;
-                assert!(it.advance($n).is_ok());
-                assert_eq!(it.next(), $next);
-            }
-        };
-    }
 
-    macro_rules! advance_test_err {
-        ($name:ident, $seq_len:expr, $n:expr) => {
-            #[test]
-            fn $name() {
-                let mut it = 0..$seq_len;
-                assert_eq!(it.advance($n).unwrap_err(), $seq_len);
-                assert_eq!(it.next(), None);
-            }
-        };
+    #[rstest]
+    #[case::advance_0th_of_10(10, 0, Ok(Some(0)))]
+    #[case::advance_1th_of_10(10, 1, Ok(Some(1)))]
+    #[case::advance_9th_of_10(10, 9, Ok(Some(9)))]
+    #[case::advance_10th_of_10(10, 10, Ok(None))]
+    #[case::advance_11th_of_10(10, 11, Err(10))]
+    #[case::advance_100th_of_10(10, 100, Err(10))]
+    fn test_advance(
+        #[case] seq_len: usize,
+        #[case] n: usize,
+        #[case] next: StdResult<Option<usize>, usize>,
+    ) {
+        let mut it = 0..seq_len;
+        let advance_res = it.advance(n);
+        assert_eq!(advance_res.map(|_| it.next()), next);
     }
-
-    advance_test!(advance_0th_of_10, 10, 0, Some(0));
-    advance_test!(advance_1th_of_10, 10, 1, Some(1));
-    advance_test!(advance_9th_of_10, 10, 9, Some(9));
-    advance_test!(advance_10th_of_10, 10, 10, None);
-    advance_test_err!(advance_11th_of_10, 10, 11);
-    advance_test_err!(advance_100th_of_10, 10, 100);
 
     // --------------------------------------------------------------------------------------------
     // IterTools::advance_back tests
     // --------------------------------------------------------------------------------------------
-    macro_rules! advance_back_test {
-        ($name:ident, $seq_len:expr, $n:expr, $next:expr) => {
-            #[test]
-            fn $name() {
-                let mut it = 0..$seq_len;
-                assert!(it.advance_back($n).is_ok());
-                assert_eq!(it.next_back(), $next);
-            }
-        };
+    #[rstest]
+    #[case::advance_back_0th_of_10(10, 0, Ok(Some(9)))]
+    #[case::advance_back_1th_of_10(10, 1, Ok(Some(8)))]
+    #[case::advance_back_9th_of_10(10, 9, Ok(Some(0)))]
+    #[case::advance_back_10th_of_10(10, 10, Ok(None))]
+    #[case::advance_back_11th_of_10(10, 11, Err(10))]
+    #[case::advance_back_100th_of_10(10, 100, Err(10))]
+    fn test_advance_back(
+        #[case] seq_len: usize,
+        #[case] n: usize,
+        #[case] next_back: StdResult<Option<usize>, usize>,
+    ) {
+        let mut it = 0..seq_len;
+        let advance_back_res = it.advance_back(n);
+        assert_eq!(advance_back_res.map(|_| it.next_back()), next_back);
     }
-
-    macro_rules! advance_back_test_err {
-        ($name:ident, $seq_len:expr, $n:expr) => {
-            #[test]
-            fn $name() {
-                let mut it = 0..$seq_len;
-                assert_eq!(it.advance_back($n).unwrap_err(), $seq_len);
-                assert_eq!(it.next_back(), None);
-            }
-        };
-    }
-
-    advance_back_test!(advance_back_0th_of_10, 10, 0, Some(9));
-    advance_back_test!(advance_back_1th_of_10, 10, 1, Some(8));
-    advance_back_test!(advance_back_9th_of_10, 10, 9, Some(0));
-    advance_back_test!(advance_back_10th_of_10, 10, 10, None);
-    advance_back_test_err!(advance_back_11th_of_10, 10, 11);
-    advance_back_test_err!(advance_back_100th_of_10, 10, 100);
 
     // --------------------------------------------------------------------------------------------
     // CategorizedInt::try_from tests
     // --------------------------------------------------------------------------------------------
 
-    macro_rules! categorized_int_try_from_test {
-        ($name:ident, $value:expr, $expected:expr) => {
-            #[test]
-            fn $name() {
-                assert_eq!(CategorizedInt::try_from($value).unwrap(), $expected);
-            }
-        };
-    }
-
-    macro_rules! categorized_int_try_from_test_err {
-        ($name:ident, $value:expr) => {
-            #[test]
-            fn $name() {
-                assert!(CategorizedInt::try_from($value).is_err());
-            }
-        };
-    }
-
-    categorized_int_try_from_test!(categorized_int_try_from_0, 0, NonNegative(0));
-    categorized_int_try_from_test!(categorized_int_try_from_1, 1, NonNegative(1));
-    categorized_int_try_from_test!(
-        categorized_int_try_from_i64_i32_max,
-        2_147_483_647i64,
-        NonNegative(2_147_483_647usize)
-    );
-
-    #[cfg(target_pointer_width = "64")]
-    categorized_int_try_from_test!(
-        categorized_int_try_from_i64_max,
+    #[rstest]
+    #[case::i64_0(0i64, Some(NonNegative(0)))]
+    #[case::i64_1(1i64, Some(NonNegative(1)))]
+    #[case::i64_32_max(2_147_483_647i64, Some(NonNegative(2_147_483_647usize)))]
+    #[case::i64_max(
         i64::MAX,
-        NonNegative(9_223_372_036_854_775_807usize)
-    );
-
-    #[cfg(target_pointer_width = "32")]
-    categorized_int_try_from_test_err!(categorized_int_try_from_i64_max, i64::MAX);
-
-    categorized_int_try_from_test!(categorized_int_try_from_minus1, -1, Negative(1));
-    categorized_int_try_from_test!(
-        categorized_int_try_from_i64_i32_min,
-        -2_147_483_648i64,
-        Negative(2_147_483_648usize)
-    );
-
-    #[cfg(target_pointer_width = "64")]
-    categorized_int_try_from_test!(
-        categorized_int_try_from_i64_min,
+        none_on_32_bit_arch(NonNegative(9_223_372_036_854_775_807usize))
+    )]
+    #[case::i64_minus1(-1i64, Some(Negative(1)))]
+    #[case::i64_32_min(-2_147_483_648i64, Some(Negative(2_147_483_648usize)))]
+    #[case::i64_min(
         i64::MIN,
-        Negative(9_223_372_036_854_775_808usize)
-    );
-
-    #[cfg(target_pointer_width = "32")]
-    categorized_int_try_from_test_err!(categorized_int_try_from_i64_min, i64::MIN);
+        none_on_32_bit_arch(Negative(9_223_372_036_854_775_808usize))
+    )]
+    fn test_categorized_int_try_from<T>(#[case] from: T, #[case] expected: Option<CategorizedInt>)
+    where
+        CategorizedInt: TryFrom<T>,
+        <CategorizedInt as TryFrom<T>>::Error: fmt::Debug,
+    {
+        match expected {
+            Some(cat_int) => assert_eq!(CategorizedInt::try_from(from).unwrap(), cat_int),
+            None => assert!(CategorizedInt::try_from(from).is_err()),
+        }
+    }
 }
