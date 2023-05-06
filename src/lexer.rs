@@ -232,82 +232,45 @@ pub fn lex(query: &str) -> Result<Vec<Token>> {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use TokenKind::*;
 
     use pretty_assertions::assert_eq;
+    use rstest::rstest;
 
-    macro_rules! lex_test {
-        ($name:ident, $(($query_fragment:expr, $token_kind:ident)),*) => {
-            #[test]
-            fn $name() {
-                let expected_fragments = vec![
-                    $(
-                        ($query_fragment, TokenKind::$token_kind),
-                    )*
-                ];
-                let query: String = expected_fragments.iter().map(|x| x.0).collect();
-
-                let mut expected: Vec<Token> = vec![];
-                let mut offset = 0;
-                for (fragment, kind) in expected_fragments {
-
-                    // Whitespace is ignored by TokenIterator, so filter it out
-                    // here too.
-                    if kind != TokenKind::Whitespace {
-                        expected.push(Token {
-                            span: (offset, fragment.len()).into(),
-                            kind,
-                        });
-                    }
-                    offset += fragment.len();
-                }
-                expected.push(Token {
-                    span: (query.len(), 0).into(),
-                    kind: TokenKind::Eof,
-                });
-
-                let actual: Vec<Token> = lex(&query).unwrap();
-                assert_eq!(actual, expected);
-            }
-        }
-    }
-
-    lex_test!(boolfalse, ("false", False));
-    lex_test!(false_prefixed_ident, ("false_id", Ident));
-    lex_test!(booltrue, ("true", True));
-    lex_test!(true_prefixed_ident, ("true_id", Ident));
-    lex_test!(colon, (":", Colon));
-    lex_test!(comma, (",", Comma));
-    lex_test!(dot, (".", Dot));
-    lex_test!(str, ("\"a string\"", Str));
-    lex_test!(str_with_quotes, ("\"a string with \\\"quotes\\\" \"", Str));
-    lex_test!(
-        str_with_backslash,
-        ("\"a string with \\\\ backslash\"", Str)
-    );
-    lex_test!(equal, ("=", Equal));
-    lex_test!(not_equal, ("!=", NotEqual));
-    lex_test!(float, ("12.34", Float));
-    lex_test!(float_starts_with_dot, (".56", Float));
-    lex_test!(float_with_e, ("7.1e+6", Float));
-    lex_test!(float_with_big_e, ("1.0E3", Float));
-    lex_test!(greater, (">", Greater));
-    lex_test!(greaterorequal, (">=", GreaterOrEqual));
-    lex_test!(ident, ("an_identifier", Ident));
-    lex_test!(ident_with_digits, ("var89", Ident));
-    lex_test!(int, ("98", Int));
-    lex_test!(int_neg, ("-110", Int));
-    lex_test!(int_zero, ("0", Int));
-    lex_test!(int_neg_zero, ("-0", Int));
-    lex_test!(lbrace, ("{", LBrace));
-    lex_test!(lbracket, ("[", LBracket));
-    lex_test!(less, ("<", Less));
-    lex_test!(lessorequal, ("<=", LessOrEqual));
-    lex_test!(lparen, ("(", LParen));
-    lex_test!(rbrace, ("}", RBrace));
-    lex_test!(rbracket, ("]", RBracket));
-    lex_test!(rparen, (")", RParen));
-    lex_test!(
-        field_call,
+    #[rstest]
+    #[case::boolfalse(vec![("false", False)])]
+    #[case::false_prefixed_ident(vec![("false_id", Ident)])]
+    #[case::booltrue(vec![("true", True)])]
+    #[case::true_prefixed_ident(vec![("true_id", Ident)])]
+    #[case::colon(vec![(":", Colon)])]
+    #[case::comma(vec![(",", Comma)])]
+    #[case::dot(vec![(".", Dot)])]
+    #[case::str(vec![("\"a string\"", Str)])]
+    #[case::str_with_quotes(vec![("\"a string with \\\"quotes\\\" \"", Str)])]
+    #[case::str_with_backslash(vec![("\"a string with \\\\ backslash\"", Str)])]
+    #[case::equal(vec![("=", Equal)])]
+    #[case::not_equal(vec![("!=", NotEqual)])]
+    #[case::float(vec![("12.34", Float)])]
+    #[case::float_starts_with_dot(vec![(".56", Float)])]
+    #[case::float_with_e(vec![("7.1e+6", Float)])]
+    #[case::float_with_big_e(vec![("1.0E3", Float)])]
+    #[case::greater(vec![(">", Greater)])]
+    #[case::greaterorequal(vec![(">=", GreaterOrEqual)])]
+    #[case::ident(vec![("an_identifier", Ident)])]
+    #[case::ident_with_digits(vec![("var89", Ident)])]
+    #[case::int(vec![("98", Int)])]
+    #[case::int_neg(vec![("-110", Int)])]
+    #[case::int_zero(vec![("0", Int)])]
+    #[case::int_neg_zero(vec![("-0", Int)])]
+    #[case::lbrace(vec![("{", LBrace)])]
+    #[case::lbracket(vec![("[", LBracket)])]
+    #[case::less(vec![("<", Less)])]
+    #[case::lessorequal(vec![("<=", LessOrEqual)])]
+    #[case::lparen(vec![("(", LParen)])]
+    #[case::rbrace(vec![("}", RBrace)])]
+    #[case::rbracket(vec![("]", RBracket)])]
+    #[case::rparen(vec![(")", RParen)])]
+    #[case::field_call(vec![
         ("a", Ident),
         (" ", Whitespace),
         (".", Dot),
@@ -329,5 +292,29 @@ mod tests {
         ("<=", LessOrEqual),
         ("-10", Int),
         ("]", RBracket)
-    );
+    ])]
+    fn test_lex(#[case] fragments: Vec<(&str, TokenKind)>) {
+        let query: String = fragments.iter().map(|x| x.0).collect();
+
+        let mut expected: Vec<Token> = vec![];
+        let mut offset = 0;
+        for (fragment, kind) in fragments {
+            // Whitespace is ignored by TokenIterator, so filter it out
+            // here too.
+            if kind != TokenKind::Whitespace {
+                expected.push(Token {
+                    span: (offset, fragment.len()).into(),
+                    kind,
+                });
+            }
+            offset += fragment.len();
+        }
+        expected.push(Token {
+            span: (query.len(), 0).into(),
+            kind: TokenKind::Eof,
+        });
+
+        let actual: Vec<Token> = lex(&query).unwrap();
+        assert_eq!(actual, expected);
+    }
 }
