@@ -15,3 +15,6 @@ pub mod schema;
 pub mod sqvalue;
 pub mod system;
 pub mod util;
+
+#[cfg(test)]
+pub mod test_util;

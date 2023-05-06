@@ -222,23 +222,8 @@ mod tests {
     use rstest::rstest;
 
     use super::*;
+    use crate::test_util::{none_on_32_bit_arch, none_on_64_bit_arch};
     use CategorizedInt::*;
-
-    fn none_on_32_bit_arch<T>(v: T) -> Option<T> {
-        if cfg!(target_pointer_width = "32") {
-            None
-        } else {
-            Some(v)
-        }
-    }
-
-    fn none_on_64_bit_arch<T>(v: T) -> Option<T> {
-        if cfg!(target_pointer_width = "64") {
-            None
-        } else {
-            Some(v)
-        }
-    }
 
     // --------------------------------------------------------------------------------------------
     // return_none_or_err tests
