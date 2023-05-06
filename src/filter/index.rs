@@ -209,6 +209,7 @@ impl<'a> ExactSizeDoubleEndedIteratorIndexFilter<'a> {
 mod tests {
 
     use pretty_assertions::assert_eq;
+    use rstest::rstest;
 
     use super::*;
     use crate::filter::test_util::{
@@ -217,110 +218,46 @@ mod tests {
     use crate::primitive::Primitive;
     use crate::schema;
 
-    macro_rules! index_test {
-        ($name:ident, $seq_type:ident, $seq_len:expr, $index:expr, $expected:expr) => {
-            #[test]
-            fn $name() {
-                let field_call_ast = fake_field_call_ast();
-                let call_info = FieldCallInfo::new(&field_call_ast, schema::root_field());
+    #[rstest]
+    #[case::iter_index_first(10, 0, Some(0))]
+    #[case::iter_index_last(10, 9, Some(9))]
+    #[case::iter_index_mid(10, 5, Some(5))]
+    #[case::iter_index_neg_first(10, -10, Some(0))]
+    #[case::iter_index_neg_last(10, -1, Some(9))]
+    #[case::iter_index_neg_mid(10, -5, Some(5))]
+    #[case::iter_index_before_first(10, -11, None)]
+    #[case::iter_index_after_last(10, 10, None)]
+    fn test_index(
+        #[values(
+            SequenceType::Iterator,
+            SequenceType::ExactSizeIterator,
+            SequenceType::DoubleEndedIterator,
+            SequenceType::ExactSizeDoubleEndedIterator
+        )]
+        seq_type: SequenceType,
 
-                let seq = gen_test_sequence(SequenceType::$seq_type, $seq_len);
-                let int_literal = fake_int_literal($index);
-                let filter = IndexFilter::new(&call_info, &int_literal);
+        #[case] seq_len: usize,
 
-                assert_eq!(
-                    filter
-                        .filter(seq)
-                        .unwrap()
-                        .get_primitive(&call_info)
-                        .unwrap(),
-                    Primitive::Int($expected)
-                );
-            }
-        };
+        #[case] index: i64,
+
+        #[case] expected: Option<i64>,
+    ) {
+        let field_call_ast = fake_field_call_ast();
+        let call_info = FieldCallInfo::new(&field_call_ast, schema::root_field());
+        let seq = gen_test_sequence(seq_type, seq_len);
+        let int_literal = fake_int_literal(index);
+        let filter = IndexFilter::new(&call_info, &int_literal);
+
+        match expected {
+            Some(v) => assert_eq!(
+                filter
+                    .filter(seq)
+                    .unwrap()
+                    .get_primitive(&call_info)
+                    .unwrap(),
+                Primitive::Int(v)
+            ),
+            None => assert!(filter.filter(seq).is_err()),
+        }
     }
-
-    macro_rules! index_error_test {
-        ($name:ident, $seq_type:ident, $seq_len:expr, $index:expr) => {
-            #[test]
-            fn $name() {
-                let field_call_ast = fake_field_call_ast();
-                let call_info = FieldCallInfo::new(&field_call_ast, schema::root_field());
-                let seq = gen_test_sequence(SequenceType::$seq_type, $seq_len);
-                let int_literal = fake_int_literal($index);
-                let filter = IndexFilter::new(&call_info, &int_literal);
-                assert!(filter.filter(seq).is_err());
-            }
-        };
-    }
-
-    index_test!(iter_index_first, Iterator, 10, 0, 0);
-    index_test!(iter_index_last, Iterator, 10, 9, 9);
-    index_test!(iter_index_mid, Iterator, 10, 5, 5);
-    index_test!(iter_index_neg_first, Iterator, 10, -10, 0);
-    index_test!(iter_index_neg_last, Iterator, 10, -1, 9);
-    index_test!(iter_index_neg_mid, Iterator, 10, -5, 5);
-    index_error_test!(iter_index_before_first, Iterator, 10, -11);
-    index_error_test!(iter_index_after_last, Iterator, 10, 10);
-
-    index_test!(es_iter_index_first, ExactSizeIterator, 10, 0, 0);
-    index_test!(es_iter_index_last, ExactSizeIterator, 10, 9, 9);
-    index_test!(es_iter_index_mid, ExactSizeIterator, 10, 5, 5);
-    index_test!(es_iter_index_neg_first, ExactSizeIterator, 10, -10, 0);
-    index_test!(es_iter_index_neg_last, ExactSizeIterator, 10, -1, 9);
-    index_test!(es_iter_index_neg_mid, ExactSizeIterator, 10, -5, 5);
-    index_error_test!(es_iter_index_before_first, ExactSizeIterator, 10, -11);
-    index_error_test!(es_iter_index_after_last, ExactSizeIterator, 10, 10);
-
-    index_test!(de_iter_index_first, DoubleEndedIterator, 10, 0, 0);
-    index_test!(de_iter_index_last, DoubleEndedIterator, 10, 9, 9);
-    index_test!(de_iter_index_mid, DoubleEndedIterator, 10, 5, 5);
-    index_test!(de_iter_index_neg_first, DoubleEndedIterator, 10, -10, 0);
-    index_test!(de_iter_index_neg_last, DoubleEndedIterator, 10, -1, 9);
-    index_test!(de_iter_index_neg_mid, DoubleEndedIterator, 10, -5, 5);
-    index_error_test!(de_iter_index_before_first, DoubleEndedIterator, 10, -11);
-    index_error_test!(de_iter_index_after_last, DoubleEndedIterator, 10, 10);
-
-    index_test!(
-        esde_iter_index_first,
-        ExactSizeDoubleEndedIterator,
-        10,
-        0,
-        0
-    );
-    index_test!(esde_iter_index_last, ExactSizeDoubleEndedIterator, 10, 9, 9);
-    index_test!(esde_iter_index_mid, ExactSizeDoubleEndedIterator, 10, 5, 5);
-    index_test!(
-        esde_iter_index_neg_first,
-        ExactSizeDoubleEndedIterator,
-        10,
-        -10,
-        0
-    );
-    index_test!(
-        esde_iter_index_neg_last,
-        ExactSizeDoubleEndedIterator,
-        10,
-        -1,
-        9
-    );
-    index_test!(
-        esde_iter_index_neg_mid,
-        ExactSizeDoubleEndedIterator,
-        10,
-        -5,
-        5
-    );
-    index_error_test!(
-        esde_iter_index_before_first,
-        ExactSizeDoubleEndedIterator,
-        10,
-        -11
-    );
-    index_error_test!(
-        esde_iter_index_after_last,
-        ExactSizeDoubleEndedIterator,
-        10,
-        10
-    );
 }
