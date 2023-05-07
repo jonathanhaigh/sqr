@@ -18,9 +18,6 @@ mod identity;
 mod index;
 mod slice;
 
-#[cfg(test)]
-mod test_util;
-
 /// An object for filtering sequences of fields based on a filter specification in the query.
 ///
 /// # Variants

@@ -978,10 +978,8 @@ mod tests {
     use strum::IntoEnumIterator;
 
     use super::*;
-    use crate::filter::test_util::{
-        fake_field_call_ast, fake_int_literal, gen_test_sequence, SequenceType,
-    };
     use crate::schema;
+    use crate::test_util::{fake_field_call_ast, fake_int_literal, gen_sqbvalue_seq, SequenceType};
 
     fn fake_slice(start: Option<i64>, stop: Option<i64>, step: Option<i64>) -> ast::Slice {
         ast::Slice {
@@ -1001,7 +999,7 @@ mod tests {
     ) -> std::result::Result<(), String> {
         let field_call_ast = fake_field_call_ast();
         let call_info = FieldCallInfo::new(&field_call_ast, schema::root_field());
-        let seq = gen_test_sequence(seq_type, seq_len);
+        let seq = gen_sqbvalue_seq(seq_type, seq_len);
         let slice_ast = fake_slice(start, stop, step);
         let filter = SliceFilter::new(&call_info, &slice_ast);
         let got = filter
