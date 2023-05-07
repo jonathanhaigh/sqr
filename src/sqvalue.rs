@@ -180,3 +180,59 @@ impl<'a> SqBValueSequence<'a> {
         }
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use crate::test_util::{field_call_result_to_primitive, gen_sqbvalue_seq, SequenceType};
+
+    use super::*;
+
+    use pretty_assertions::assert_eq;
+    use rstest::rstest;
+
+    #[rstest]
+    fn test_dyn_sequence_next(
+        #[values(
+            SequenceType::Iterator,
+            SequenceType::ExactSizeIterator,
+            SequenceType::DoubleEndedIterator,
+            SequenceType::ExactSizeDoubleEndedIterator
+        )]
+        seq_type: SequenceType,
+    ) {
+        let mut seq = gen_sqbvalue_seq(seq_type, 5);
+        assert_eq!(
+            field_call_result_to_primitive(seq.next().unwrap()),
+            Primitive::Int(0)
+        );
+        assert_eq!(
+            field_call_result_to_primitive(seq.next().unwrap()),
+            Primitive::Int(1)
+        );
+        assert_eq!(
+            field_call_result_to_primitive(seq.next().unwrap()),
+            Primitive::Int(2)
+        );
+        assert_eq!(
+            field_call_result_to_primitive(seq.next().unwrap()),
+            Primitive::Int(3)
+        );
+        assert_eq!(
+            field_call_result_to_primitive(seq.next().unwrap()),
+            Primitive::Int(4)
+        );
+        assert!(seq.next().is_none());
+    }
+
+    #[test]
+    fn test_dyn_sequence_empty() {
+        let mut empty = DynSequence::<i64>::empty();
+        assert_eq!(empty.next(), None);
+    }
+
+    #[test]
+    fn test_dyn_sequence_default() {
+        let mut def = DynSequence::<i64>::default();
+        assert_eq!(def.next(), None);
+    }
+}

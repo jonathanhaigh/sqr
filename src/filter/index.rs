@@ -212,11 +212,9 @@ mod tests {
     use rstest::rstest;
 
     use super::*;
-    use crate::filter::test_util::{
-        fake_field_call_ast, fake_int_literal, gen_test_sequence, SequenceType,
-    };
     use crate::primitive::Primitive;
     use crate::schema;
+    use crate::test_util::{fake_field_call_ast, fake_int_literal, gen_sqbvalue_seq, SequenceType};
 
     #[rstest]
     #[case::iter_index_first(10, 0, Some(0))]
@@ -244,7 +242,7 @@ mod tests {
     ) {
         let field_call_ast = fake_field_call_ast();
         let call_info = FieldCallInfo::new(&field_call_ast, schema::root_field());
-        let seq = gen_test_sequence(seq_type, seq_len);
+        let seq = gen_sqbvalue_seq(seq_type, seq_len);
         let int_literal = fake_int_literal(index);
         let filter = IndexFilter::new(&call_info, &int_literal);
 

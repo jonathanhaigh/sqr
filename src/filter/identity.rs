@@ -38,7 +38,7 @@ mod tests {
     use rstest::rstest;
 
     use super::*;
-    use crate::filter::test_util::{assert_eq_sqbvalueseqs, gen_test_sequence, SequenceType};
+    use crate::test_util::{assert_eq_sqbvalue_seqs, gen_sqbvalue_seq, SequenceType};
 
     #[rstest]
     fn test_identity_filter(
@@ -51,10 +51,10 @@ mod tests {
         seq_type: SequenceType,
         #[values(0, 1, 10)] seq_len: usize,
     ) {
-        let seq = gen_test_sequence(seq_type, seq_len);
-        let expected = gen_test_sequence(seq_type, seq_len);
+        let seq = gen_sqbvalue_seq(seq_type, seq_len);
+        let expected = gen_sqbvalue_seq(seq_type, seq_len);
         let filter = IdentityFilter::new();
         let filtered = filter.filter(seq).unwrap();
-        assert_eq_sqbvalueseqs(filtered, expected);
+        assert_eq_sqbvalue_seqs(filtered, expected);
     }
 }
