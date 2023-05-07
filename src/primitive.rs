@@ -151,3 +151,171 @@ generate_try_as_ref_for_primitive!(i64, Int);
 generate_try_as_ref_for_primitive!(f64, Float);
 generate_try_as_ref_for_primitive!(str, Str);
 generate_try_as_ref_for_primitive!(bool, Bool);
+
+#[cfg(test)]
+mod tests {
+
+    use std::cmp::Ordering::{self, *};
+
+    use fancy_regex::Regex;
+    use pretty_assertions::assert_eq;
+    use rstest::rstest;
+
+    use super::*;
+    use Primitive::*;
+
+    #[rstest]
+    #[case::int[PrimitiveKind::Int, "(?i:int)"]]
+    #[case::float[PrimitiveKind::Float, "(?i:float)"]]
+    #[case::str[PrimitiveKind::Str, "(?i:str)"]]
+    #[case::bool[PrimitiveKind::Bool, "(?i:bool)"]]
+    fn test_primitive_kind_name(#[case] kind: PrimitiveKind, #[case] regex_str: &'static str) {
+        let re = Regex::new(regex_str).unwrap();
+        assert!(re.is_match(kind.name()).unwrap());
+    }
+
+    #[rstest]
+    #[case::int[PrimitiveKind::Int, "(?i:int)"]]
+    #[case::float[PrimitiveKind::Float, "(?i:float)"]]
+    #[case::str[PrimitiveKind::Str, "(?i:str)"]]
+    #[case::bool[PrimitiveKind::Bool, "(?i:bool)"]]
+    fn test_primitive_kind_display(#[case] kind: PrimitiveKind, #[case] regex_str: &'static str) {
+        let re = Regex::new(regex_str).unwrap();
+        assert!(re.is_match(&format!("{}", kind)).unwrap());
+    }
+
+    #[rstest]
+    #[case::int[PrimitiveKind::Int, "(?i:int)"]]
+    #[case::float[PrimitiveKind::Float, "(?i:float)"]]
+    #[case::str[PrimitiveKind::Str, "(?i:str)"]]
+    #[case::bool[PrimitiveKind::Bool, "(?i:bool)"]]
+    fn test_primitive_kind_debug(#[case] kind: PrimitiveKind, #[case] regex_str: &'static str) {
+        let re = Regex::new(regex_str).unwrap();
+        assert!(re.is_match(&format!("{:?}", kind)).unwrap());
+    }
+
+    #[rstest]
+    #[case::int(Int(10), PrimitiveKind::Int)]
+    #[case::float(Float(100.0), PrimitiveKind::Float)]
+    #[case::str(Str("abc".to_owned()), PrimitiveKind::Str)]
+    #[case::bool(Bool(true), PrimitiveKind::Bool)]
+    fn test_primitive_dot_kind(#[case] prim: Primitive, #[case] kind: PrimitiveKind) {
+        assert_eq!(prim.kind(), kind);
+    }
+
+    #[rstest]
+    #[case::int(Int(10), PrimitiveKind::Int)]
+    #[case::float(Float(100.0), PrimitiveKind::Float)]
+    #[case::str(Str("abc".to_owned()), PrimitiveKind::Str)]
+    #[case::bool(Bool(true), PrimitiveKind::Bool)]
+    fn test_primitive_dot_kind_name(#[case] prim: Primitive, #[case] kind: PrimitiveKind) {
+        assert_eq!(prim.kind_name(), kind.name());
+    }
+
+    #[rstest]
+    #[case::int_10_10(Int(10), Int(10), true)]
+    #[case::int_10_9(Int(10), Int(9), false)]
+    #[case::int_10_str_x(Int(10), Str("x".to_owned()), false)]
+    #[case::int_10_float_9p1(Int(10), Float(9.1), false)]
+    #[case::int_1_bool_true(Int(1), Bool(true), false)]
+    #[case::str_x_x(Str("x".to_owned()), Str("x".to_owned()), true)]
+    #[case::str_x_y(Str("x".to_owned()), Str("y".to_owned()), false)]
+    #[case::str_x_float_9p1(Str("x".to_owned()), Float(9.1), false)]
+    #[case::str_x_bool_true(Str("x".to_owned()), Bool(true), false)]
+    #[case::float_9p1_9p1(Float(9.1), Float(9.1), true)]
+    #[case::float_9p1_8p2(Float(9.1), Float(8.2), false)]
+    #[case::float_nan_9p1(Float(f64::NAN), Float(9.1), false)]
+    #[case::float_nan_nan(Float(f64::NAN), Float(f64::NAN), false)]
+    #[case::float_bool_true(Float(9.1), Bool(true), false)]
+    #[case::bool_true_true(Bool(true), Bool(true), true)]
+    #[case::bool_false_false(Bool(false), Bool(false), true)]
+    #[case::bool_true_false(Bool(true), Bool(false), false)]
+    fn test_primitive_partial_eq(#[case] a: Primitive, #[case] b: Primitive, #[case] result: bool) {
+        assert_eq!(a == b, result);
+    }
+
+    #[rstest]
+    #[case::int_10_10(Int(10), Int(10), Some(Equal))]
+    #[case::int_10_9(Int(10), Int(9), Some(Greater))]
+    #[case::int_10_20(Int(10), Int(20), Some(Less))]
+    #[case::int_10_str_x(Int(10), Str("x".to_owned()), None)]
+    #[case::int_10_float_9p1(Int(10), Float(9.1), None)]
+    #[case::int_1_bool_true(Int(1), Bool(true), None)]
+    #[case::str_x_x(Str("x".to_owned()), Str("x".to_owned()), Some(Equal))]
+    #[case::str_x_y(Str("b".to_owned()), Str("a".to_owned()), Some(Greater))]
+    #[case::str_x_y(Str("a".to_owned()), Str("b".to_owned()), Some(Less))]
+    #[case::str_x_float_9p1(Str("x".to_owned()), Float(9.1), None)]
+    #[case::str_x_bool_true(Str("x".to_owned()), Bool(true), None)]
+    #[case::float_9p1_9p1(Float(9.1), Float(9.1), Some(Equal))]
+    #[case::float_9p1_8p2(Float(9.1), Float(8.2), Some(Greater))]
+    #[case::float_9p1_8p2(Float(9.1), Float(100.0), Some(Less))]
+    #[case::float_nan_9p1(Float(f64::NAN), Float(9.1), None)]
+    #[case::float_nan_nan(Float(f64::NAN), Float(f64::NAN), None)]
+    #[case::float_bool_true(Float(9.1), Bool(true), None)]
+    #[case::bool_true_true(Bool(true), Bool(true), Some(Equal))]
+    #[case::bool_false_false(Bool(false), Bool(false), Some(Equal))]
+    #[case::bool_true_false(Bool(true), Bool(false), Some(Greater))]
+    #[case::bool_true_false(Bool(false), Bool(true), Some(Less))]
+    fn test_primitive_partial_cmp(
+        #[case] a: Primitive,
+        #[case] b: Primitive,
+        #[case] result: Option<Ordering>,
+    ) {
+        assert_eq!(a.partial_cmp(&b), result);
+    }
+
+    #[rstest]
+    #[case::int_int(Int(10), Some(10i64))]
+    #[case::int_float(Int(10), Option::<f64>::None)]
+    #[case::int_str(Int(10), Option::<String>::None)]
+    #[case::int_bool(Int(10), Option::<bool>::None)]
+    #[case::float_int(Float(10.1), Option::<i64>::None)]
+    #[case::float_float(Float(10.1), Some(10.1f64))]
+    #[case::float_str(Float(10.1), Option::<String>::None)]
+    #[case::float_bool(Float(10.1), Option::<bool>::None)]
+    #[case::str_int(Str("x".to_owned()), Option::<i64>::None)]
+    #[case::str_float(Str("x".to_owned()), Option::<f64>::None)]
+    #[case::str_str(Str("x".to_owned()), Some("x".to_owned()))]
+    #[case::str_bool(Str("x".to_owned()), Option::<bool>::None)]
+    #[case::bool_int(Bool(true), Option::<i64>::None)]
+    #[case::bool_float(Bool(true), Option::<f64>::None)]
+    #[case::bool_str(Bool(true), Option::<String>::None)]
+    #[case::bool_true(Bool(true), Some(true))]
+    #[case::bool_false(Bool(false), Some(false))]
+    fn test_try_from_primitive<T>(#[case] prim: Primitive, #[case] expected: Option<T>)
+    where
+        T: std::convert::TryFrom<Primitive> + std::cmp::PartialEq + std::fmt::Debug,
+        <T as TryFrom<Primitive>>::Error: std::fmt::Debug,
+    {
+        match expected {
+            Some(v) => assert_eq!(T::try_from(prim).unwrap(), v),
+            None => assert!(T::try_from(prim).is_err()),
+        }
+    }
+
+    #[rstest]
+    #[case::int_int(Int(10), Some(&10i64))]
+    #[case::int_float(Int(10), Option::<&f64>::None)]
+    #[case::int_str(Int(10), Option::<&str>::None)]
+    #[case::int_bool(Int(10), Option::<&bool>::None)]
+    #[case::float_int(Float(10.1), Option::<&i64>::None)]
+    #[case::float_float(Float(10.1), Some(&10.1f64))]
+    #[case::float_str(Float(10.1), Option::<&str>::None)]
+    #[case::float_bool(Float(10.1), Option::<&bool>::None)]
+    #[case::str_int(Str("x".to_owned()), Option::<&i64>::None)]
+    #[case::str_float(Str("x".to_owned()), Option::<&f64>::None)]
+    #[case::str_str(Str("x".to_owned()), Some("x"))]
+    #[case::str_bool(Str("x".to_owned()), Option::<&bool>::None)]
+    #[case::bool_int(Bool(true), Option::<&i64>::None)]
+    #[case::bool_float(Bool(true), Option::<&f64>::None)]
+    #[case::bool_str(Bool(true), Option::<&str>::None)]
+    #[case::bool_true(Bool(true), Some(&true))]
+    #[case::bool_false(Bool(false), Some(&false))]
+    fn test_try_as_ref_from_primitive<T>(#[case] prim: Primitive, #[case] expected: Option<&T>)
+    where
+        Primitive: crate::util::TryAsRef<T>,
+        T: ?Sized + std::cmp::PartialEq + std::fmt::Debug,
+    {
+        assert_eq!(prim.try_as_ref(), expected);
+    }
+}
