@@ -12,7 +12,7 @@ use crate::error::Result;
 use crate::fieldcall::FieldCallInfo;
 use crate::primitive::Primitive;
 use crate::schema;
-use crate::sqvalue::{SqBValue, SqBValueSequence, SqValueSequence};
+use crate::sqvalue::{DynSequence, SqBValue, SqBValueSequence, SqValueSequence};
 use crate::system::sqint::SqInt;
 
 pub fn none_on_32_bit_arch<T>(v: T) -> Option<T> {
@@ -101,6 +101,17 @@ pub fn assert_eq_sqbvalue_seq_elements(a: SqBValueSequence, b: SqBValueSequence)
 pub fn assert_eq_sqbvalue_seqs(a: SqBValueSequence, b: SqBValueSequence) {
     assert_eq!(std::mem::discriminant(&a), std::mem::discriminant(&b));
     assert_eq_sqbvalue_seq_elements(a, b);
+}
+
+pub fn get_seq_type<T>(seq: &DynSequence<T>) -> SequenceType {
+    use DynSequence as DS;
+    use SequenceType as ST;
+    match seq {
+        DS::Iterator(_) => ST::Iterator,
+        DS::ExactSizeIterator(_) => ST::ExactSizeIterator,
+        DS::DoubleEndedIterator(_) => ST::DoubleEndedIterator,
+        DS::ExactSizeDoubleEndedIterator(_) => ST::ExactSizeDoubleEndedIterator,
+    }
 }
 
 pub fn fake_int_literal(value: i64) -> ast::IntLiteral {
