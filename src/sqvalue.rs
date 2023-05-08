@@ -183,12 +183,15 @@ impl<'a> SqBValueSequence<'a> {
 
 #[cfg(test)]
 mod tests {
-    use crate::test_util::{field_call_result_to_primitive, gen_sqbvalue_seq, SequenceType};
-
-    use super::*;
-
     use pretty_assertions::assert_eq;
     use rstest::rstest;
+
+    use super::*;
+    use crate::schema;
+    use crate::test_util::{
+        fake_field_call_ast, field_call_result_to_primitive, gen_sqbvalue_seq, gen_sqint_seq,
+        get_seq_type, SequenceType,
+    };
 
     #[rstest]
     fn test_dyn_sequence_next(
@@ -234,5 +237,33 @@ mod tests {
     fn test_dyn_sequence_default() {
         let mut def = DynSequence::<i64>::default();
         assert_eq!(def.next(), None);
+    }
+
+    #[rstest]
+    fn test_sq_bvalue_sequence_from_sq_value_sequence(
+        #[values(
+            SequenceType::Iterator,
+            SequenceType::ExactSizeIterator,
+            SequenceType::DoubleEndedIterator,
+            SequenceType::ExactSizeDoubleEndedIterator
+        )]
+        seq_type: SequenceType,
+    ) {
+        let sqint_seq = gen_sqint_seq(seq_type, 5);
+        let field_call_ast = fake_field_call_ast();
+        let call_info = FieldCallInfo::new(&field_call_ast, schema::root_field());
+        let sqbvalue_seq =
+            SqBValueSequence::from_sq_value_sequence(gen_sqint_seq(seq_type, 5), &call_info);
+
+        // We should retain the same iterator category
+        assert_eq!(get_seq_type(&sqint_seq), get_seq_type(&sqbvalue_seq));
+
+        let sqint_seq_prims = sqint_seq
+            .map(|res| res.unwrap().get_primitive(&call_info).unwrap())
+            .collect::<Vec<_>>();
+        let sqbvalue_seq_prims = sqbvalue_seq
+            .map(|res| res.unwrap().get_primitive(&call_info).unwrap())
+            .collect::<Vec<_>>();
+        assert_eq!(sqint_seq_prims, sqbvalue_seq_prims);
     }
 }
