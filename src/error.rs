@@ -10,6 +10,27 @@ use crate::fieldcall::{FieldCallInfo, FieldSequenceType};
 use crate::lexer::TokenKind;
 use crate::primitive::PrimitiveKind;
 
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub enum ErrorKind {
+    Lex,
+    UnexpectedToken,
+    ParseValue,
+    RepeatedNamedArg,
+    ArgTypeMismatch,
+    Serialize,
+    ArgMissing,
+    InvalidField,
+    DuplicateField,
+    PullupWithSiblings,
+    System,
+    ToPrimitive,
+    FilterIndexOutOfBounds,
+    SliceStepZero,
+    ConvertInteger,
+    NonSingleFieldInComparison,
+    ComparisonTypeMismatch,
+}
+
 /// Type of error used throughout SQ infrastructure code.
 ///
 /// Errors have `span: SourceSpan` members where possible to point to the part of the input query
@@ -207,7 +228,7 @@ pub enum Error {
         sequence_type: FieldSequenceType,
     },
 
-    /// Invalid comparison filter operand types
+    /// Invalid comparison filter operand types.
     #[error("Type mismatch in comparison filter for {type_name}::{field_name}: left operand has type {lhs} and right operand has type {rhs}")]
     ComparisonTypeMismatch {
         #[label("failed conversion")]
@@ -224,6 +245,30 @@ pub enum Error {
         rhs_span: SourceSpan,
         rhs: PrimitiveKind,
     },
+}
+
+impl Error {
+    pub fn kind(&self) -> ErrorKind {
+        match self {
+            Error::Lex { .. } => ErrorKind::Lex,
+            Error::UnexpectedToken { .. } => ErrorKind::UnexpectedToken,
+            Error::ParseValue { .. } => ErrorKind::ParseValue,
+            Error::RepeatedNamedArg { .. } => ErrorKind::RepeatedNamedArg,
+            Error::ArgTypeMismatch { .. } => ErrorKind::ArgTypeMismatch,
+            Error::Serialize { .. } => ErrorKind::Serialize,
+            Error::ArgMissing { .. } => ErrorKind::ArgMissing,
+            Error::InvalidField { .. } => ErrorKind::InvalidField,
+            Error::DuplicateField { .. } => ErrorKind::DuplicateField,
+            Error::PullupWithSiblings { .. } => ErrorKind::PullupWithSiblings,
+            Error::System { .. } => ErrorKind::System,
+            Error::ToPrimitive { .. } => ErrorKind::ToPrimitive,
+            Error::FilterIndexOutOfBounds { .. } => ErrorKind::FilterIndexOutOfBounds,
+            Error::SliceStepZero { .. } => ErrorKind::SliceStepZero,
+            Error::ConvertInteger { .. } => ErrorKind::ConvertInteger,
+            Error::NonSingleFieldInComparison { .. } => ErrorKind::NonSingleFieldInComparison,
+            Error::ComparisonTypeMismatch { .. } => ErrorKind::ComparisonTypeMismatch,
+        }
+    }
 }
 
 /// A value or an `Error`
