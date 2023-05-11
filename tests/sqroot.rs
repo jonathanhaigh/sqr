@@ -6,7 +6,9 @@ use std::env::var as env_var;
 
 use serde_json::json;
 
-use integration_test_util::{run_query, test_query_err, test_query_ok, test_simple_query_ok};
+use integration_test_util::{
+    run_query, test_query_err, test_query_ok, test_simple_query_err, test_simple_query_ok,
+};
 use sqr::error::ErrorKind;
 
 mod integration_test_util;
@@ -98,6 +100,11 @@ test_simple_query_ok!(
     root_by_uid, "<user(uid=0).<username", json!("root");
 );
 
+test_simple_query_err!(
+    sqroot_user_err,
+    invalid_uid, "user(uid=4294967296)", System; // u32::MAX + 1
+);
+
 #[test]
 fn sqroot_user_both_uid_and_name_err() {
     let uid_json = run_query("<user.<uid").unwrap();
@@ -144,4 +151,9 @@ test_simple_query_ok!(
     sqroot_group,
     root_by_name, "<group(group_name=\"root\").<gid", json!(0);
     root_by_gid, "<group(gid=0).<name", json!("root");
+);
+
+test_simple_query_err!(
+    sqroot_group_err,
+    invalid_gid, "group(gid=4294967296)", System; // u32::MAX + 1
 );
