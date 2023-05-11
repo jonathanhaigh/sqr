@@ -3,12 +3,13 @@
 // SPDX-License-Identifier: MIT
 
 use pretty_assertions::assert_eq;
+use serde_json::Value as JsonValue;
 
 use sqr::error::{ErrorKind, Result};
 use sqr::parser::Parser;
 use sqr::{lexer, results, system};
 
-fn run_query(query: &str) -> Result<String> {
+pub fn run_query(query: &str) -> Result<String> {
     let tokens = lexer::lex(query)?;
 
     let mut p = Parser::new(query, &tokens);
@@ -22,10 +23,10 @@ fn run_query(query: &str) -> Result<String> {
 
 // Rust doesn't seem to see that this function is actually used.
 #[allow(dead_code)]
-pub fn test_query_ok(query: &str, expected: &str) {
+pub fn test_query_ok(query: &str, expected: JsonValue) {
     assert_eq!(
         serde_json::from_str::<serde_json::Value>(run_query(query).unwrap().as_str()).unwrap(),
-        serde_json::from_str::<serde_json::Value>(expected).unwrap()
+        expected,
     );
 }
 
@@ -37,9 +38,11 @@ macro_rules! test_simple_query_ok {
         // namespace
         mod $name {
             use rstest::rstest;
+            use serde_json::Value as JsonValue;
+            use serde_json::json;
             #[rstest]
             $(#[case::$case_name($query, $expected)])*
-            fn test_query_ok(#[case] query: &str, #[case] expected: &str) {
+            fn test_query_ok(#[case] query: &str, #[case] expected: JsonValue) {
                 $crate::integration_test_util::test_query_ok(query, expected);
             }
         }
