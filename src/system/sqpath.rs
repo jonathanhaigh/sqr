@@ -35,8 +35,12 @@ impl SqPathTrait for SqPath {
         Ok(Primitive::Str(self.to_str()?.to_owned()))
     }
 
-    fn string(&self) -> anyhow::Result<SqString> {
-        Ok(SqString::new(self.to_str()?.to_owned()))
+    fn string(&self, replace_invalid: Option<bool>) -> anyhow::Result<SqString> {
+        if replace_invalid.unwrap_or(false) {
+            Ok(SqString::new(self.path.to_string_lossy().into_owned()))
+        } else {
+            Ok(SqString::new(self.to_str()?.to_owned()))
+        }
     }
 
     fn os_string(&self) -> anyhow::Result<SqOsString> {
