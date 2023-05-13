@@ -7,7 +7,7 @@ use std::env::var as env_var;
 use serde_json::json;
 
 use integration_test_util::{
-    run_query, test_query_err, test_query_ok, test_simple_query_err, test_simple_query_ok,
+    get_query, test_query_err, test_query_ok, test_simple_query_err, test_simple_query_ok,
 };
 use sqr::error::ErrorKind;
 
@@ -89,7 +89,7 @@ fn sqroot_user_by_name() {
 
 #[test]
 fn sqroot_user_by_uid() {
-    let uid_json = run_query("<user.<uid").unwrap();
+    let uid_json = get_query("<user.<uid").unwrap();
     let query = format!("<user(uid={}).<username", uid_json);
     test_query_ok(&query, json!(env_var("USER").unwrap()));
 }
@@ -107,7 +107,7 @@ test_simple_query_err!(
 
 #[test]
 fn sqroot_user_both_uid_and_name_err() {
-    let uid_json = run_query("<user.<uid").unwrap();
+    let uid_json = get_query("<user.<uid").unwrap();
     let query = format!(
         "user(uid={}, username=\"{}\")",
         uid_json,
@@ -119,14 +119,14 @@ fn sqroot_user_both_uid_and_name_err() {
 #[test]
 fn sqroot_group_default() {
     use serde_json::{from_str, Value};
-    let group_name_json = run_query("<user.<group.<name").unwrap();
+    let group_name_json = get_query("<user.<group.<name").unwrap();
     test_query_ok("<group.<name", from_str::<Value>(&group_name_json).unwrap());
 }
 
 #[test]
 fn sqroot_group_by_name() {
     use serde_json::{from_str, Value};
-    let group_name_json = run_query("<user.<group.<name").unwrap();
+    let group_name_json = get_query("<user.<group.<name").unwrap();
     let query = format!("<group(name={}).<name", group_name_json);
     test_query_ok(&query, from_str::<Value>(&group_name_json).unwrap());
 }
@@ -134,15 +134,15 @@ fn sqroot_group_by_name() {
 #[test]
 fn sqroot_group_by_gid() {
     use serde_json::{from_str, Value};
-    let gid_json = run_query("<user.<group.<gid").unwrap();
+    let gid_json = get_query("<user.<group.<gid").unwrap();
     let query = format!("<group(gid={}).<gid", gid_json);
     test_query_ok(&query, from_str::<Value>(&gid_json).unwrap());
 }
 
 #[test]
 fn sqroot_group_by_both_gid_and_name_err() {
-    let gid_json = run_query("<user.<group.<gid").unwrap();
-    let name_json = run_query("<user.<group.<name").unwrap();
+    let gid_json = get_query("<user.<group.<gid").unwrap();
+    let name_json = get_query("<user.<group.<name").unwrap();
     let query = format!("<group(gid={}, group_name={})", gid_json, name_json);
     test_query_err(&query, ErrorKind::System);
 }

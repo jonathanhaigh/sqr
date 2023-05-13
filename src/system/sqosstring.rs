@@ -7,6 +7,7 @@ use std::ffi::OsString;
 use anyhow::anyhow;
 
 use crate::primitive::Primitive;
+use crate::system::sqstring::SqString;
 use crate::system::SqOsStringTrait;
 
 pub struct SqOsString {
@@ -28,5 +29,13 @@ impl SqOsString {
 impl SqOsStringTrait for SqOsString {
     fn to_primitive(&self) -> anyhow::Result<Primitive> {
         Ok(Primitive::Str(self.to_str()?.to_owned()))
+    }
+
+    fn string(&self, replace_invalid: Option<bool>) -> anyhow::Result<SqString> {
+        if replace_invalid.unwrap_or(false) {
+            Ok(SqString::new(self.value.to_string_lossy().into_owned()))
+        } else {
+            Ok(SqString::new(self.to_str()?.to_owned()))
+        }
     }
 }

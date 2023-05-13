@@ -127,7 +127,24 @@
             "name": "SqOsString",
             "doc": "A string in the OS's encoding",
             "primitive_coercion": "PrimitiveString",
-            "fields": []
+            "fields": [
+                {
+                    "name": "string",
+                    "doc": "Convert to an SqString (a unicode string). Fails if the SqOsString is not valid unicode.",
+                    "return_type": "SqString",
+                    "return_sequence_type": "Single",
+                    "params": [
+                        {
+                            "index": 0,
+                            "name": "replace_invalid",
+                            "doc": "Replace invalid unicode bytes with � instead of failing.",
+                            "type": "PrimitiveBool",
+                            "required": false,
+                            "default_value": false
+                        }
+                    ]
+                }
+            ]
         },
         {
             "name": "SqPath",
@@ -139,7 +156,16 @@
                     "doc": "Get the path as an SqString",
                     "return_type": "SqString",
                     "return_sequence_type": "Single",
-                    "params": []
+                    "params": [
+                        {
+                            "index": 0,
+                            "name": "replace_invalid",
+                            "doc": "Replace invalid unicode bytes with � instead of failing.",
+                            "type": "PrimitiveBool",
+                            "required": false,
+                            "default_value": false
+                        }
+                    ]
                 },
                 {
                     "name": "os_string",
@@ -158,8 +184,8 @@
                         "* The parent of \"/home/user1/file.tar.gz\" is \"/home/user1\".",
                         "* The parent of \"/home/user1/.file\" is \"/home/user1\".",
                         "* The parent of \"/usr/bin/sq\" is \"/usr/bin\".",
-                        "* The parent of \"/usr/bin/\" is \"/usr/bin\".",
-                        "* The parent of \"/\" is \"/\"."
+                        "* The parent of \"/usr/bin/\" is \"/usr\".",
+                        "* The parent of \"/\" is null."
                     ],
                     "return_type": "SqPath",
                     "return_sequence_type": "Option",
@@ -175,8 +201,8 @@
                         "* The filename of \"/home/user1/file.tar.gz\" is \"file.tar.gz\".",
                         "* The filename of \"/home/user1/.file\" is \".file\".",
                         "* The filename of \"/usr/bin/sq\" is \"sq\".",
-                        "* The filename of \"/usr/bin/\" is \"\".",
-                        "* The filename of \"/\" is \"\"."
+                        "* The filename of \"/usr/bin/\" is \"bin\".",
+                        "* The filename of \"/\" is null."
                     ],
                     "return_type": "SqOsString",
                     "return_sequence_type": "Option",
@@ -193,8 +219,8 @@
                         "* The stem of \"/home/user1/file.tar.gz\" is \"file.tar\".",
                         "* The stem of \"/home/user1/.file\" is \".file\".",
                         "* The stem of \"/usr/bin/sq\" is \"sq\".",
-                        "* The stem of \"/usr/bin/\" is \"\".",
-                        "* The stem of \"/\" is \"\"."
+                        "* The stem of \"/usr/bin/\" is \"bin\".",
+                        "* The stem of \"/\" is null."
                     ],
                     "return_type": "SqOsString",
                     "return_sequence_type": "Option",
@@ -218,11 +244,11 @@
                         "  An exception is made for filenames whose only \".\" is at the start of the name:",
                         "  the extension of \"/home/user1/.bashrc\" is \"\", not \".bashrc\".",
                         "Examples:",
-                        "* The extension of \"/home/user1/file.tar.gz\" is \".gz\".",
-                        "* The extension of \"/home/user1/.file\" is \"\".",
-                        "* The extension of \"/usr/bin/sq\" is \"\".",
-                        "* The extension of \"/usr/bin/\" is \"\".",
-                        "* The extension of \"/\" is \"\"."
+                        "* The extension of \"/home/user1/file.tar.gz\" is \"gz\".",
+                        "* The extension of \"/home/user1/.file\" is null.",
+                        "* The extension of \"/usr/bin/sq\" is null.",
+                        "* The extension of \"/usr/bin/\" is null.",
+                        "* The extension of \"/\" is null."
                     ],
                     "return_type": "SqOsString",
                     "return_sequence_type": "Option",
@@ -252,7 +278,7 @@
                             "doc": "Whether to dereference symlinks",
                             "type": "PrimitiveBool",
                             "required": false,
-                            "default_value": false
+                            "default_value": true
                         },
                         {
                             "index": 2,
