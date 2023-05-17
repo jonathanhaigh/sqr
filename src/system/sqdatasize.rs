@@ -10,13 +10,13 @@ use crate::system::{sqfloat::SqFloat, sqint::SqInt, SqDataSizeTrait};
 const KIB: f64 = 1024f64;
 const KB: f64 = 1000f64;
 const MIB: f64 = 1024f64 * KIB;
-const MB: f64 = 1000f64 * KIB;
+const MB: f64 = 1000f64 * KB;
 const GIB: f64 = 1024f64 * MIB;
-const GB: f64 = 1000f64 * MIB;
+const GB: f64 = 1000f64 * MB;
 const TIB: f64 = 1024f64 * GIB;
-const TB: f64 = 1000f64 * GIB;
+const TB: f64 = 1000f64 * GB;
 const PIB: f64 = 1024f64 * TIB;
-const PB: f64 = 1000f64 * TIB;
+const PB: f64 = 1000f64 * TB;
 
 pub struct SqDataSize {
     value: u64,

@@ -38,6 +38,19 @@ test_simple_query_ok!(
 );
 
 test_simple_query_ok!(
+    sqroot_data_size,
+    default_value, "<data_size", json!(0i64);
+    one, "<data_size(1)", json!(1i64);
+    i64_max, "<data_size(9223372036854775807)", json!(9_223_372_036_854_775_807i64);
+);
+
+test_simple_query_err!(
+    sqroot_data_size_err,
+    minus_one, "<data_size(-1)", System;
+    i64_min, "<data_size(-9223372036854775808)", System;
+);
+
+test_simple_query_ok!(
     sqroot_string,
     default_value, "<string", json!("");
     all_unicode_planes,

@@ -161,6 +161,42 @@ macro_rules! test_simple_query_ok {
 #[allow(unused_imports)]
 pub(crate) use test_simple_query_ok;
 
+// Rust doesn't seem to see that this macro is actually used.
+#[allow(unused_macros)]
+macro_rules! test_simple_query_approx_f64_ulp {
+    ($name:ident, $($case_name:ident, $query:expr, $expected:expr, $max_ulps:expr;)*) => {
+        mod $name {
+            use rstest::rstest;
+            #[rstest]
+            $(#[case::$case_name($query, $expected, $max_ulps)])*
+            fn test_query_approx_f64_ulp(#[case] query: &str, #[case] expected: f64, #[case] max_ulps: u32) {
+                let result = $crate::integration_test_util::get_query_as::<f64>(query);
+                approx::assert_ulps_eq!(result, expected, max_ulps=max_ulps);
+            }
+        }
+    }
+}
+#[allow(unused_imports)]
+pub(crate) use test_simple_query_approx_f64_ulp;
+
+// Rust doesn't seem to see that this macro is actually used.
+#[allow(unused_macros)]
+macro_rules! test_simple_query_approx_f64_abs_diff {
+    ($name:ident, $($case_name:ident, $query:expr, $expected:expr, $epsilon:expr;)*) => {
+        mod $name {
+            use rstest::rstest;
+            #[rstest]
+            $(#[case::$case_name($query, $expected, $epsilon)])*
+            fn test_query_approx_f64_ulp(#[case] query: &str, #[case] expected: f64, #[case] epsilon: f64) {
+                let result = $crate::integration_test_util::get_query_as::<f64>(query);
+                approx::assert_abs_diff_eq!(result, expected, epsilon=epsilon);
+            }
+        }
+    }
+}
+#[allow(unused_imports)]
+pub(crate) use test_simple_query_approx_f64_abs_diff;
+
 // Rust doesn't seem to see that this function is actually used.
 #[allow(dead_code)]
 pub fn test_query_err(query: &str, kind: ErrorKind) {
