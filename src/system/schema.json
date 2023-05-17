@@ -676,6 +676,22 @@
                     ]
                 },
                 {
+                    "name": "data_size",
+                    "doc": "Get an SqDataSize system object",
+                    "return_type": "SqDataSize",
+                    "return_sequence_type": "Single",
+                    "params": [
+                        {
+                            "index": 0,
+                            "name": "value",
+                            "doc": "the value, in bytes, of the data size to get",
+                            "type": "PrimitiveInt",
+                            "required": false,
+                            "default_value": 0
+                        }
+                    ]
+                },
+                {
                     "name": "float",
                     "doc": "Get an SqFloat system object",
                     "return_type": "SqFloat",

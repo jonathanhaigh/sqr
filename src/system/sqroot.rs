@@ -11,8 +11,8 @@ use anyhow::{anyhow, ensure};
 use crate::primitive::Primitive;
 use crate::sqvalue::SqValueSequence;
 use crate::system::{
-    sqbool::SqBool, sqfloat::SqFloat, sqgroup::SqGroup, sqint::SqInt, sqpath::SqPath,
-    sqstring::SqString, squser::SqUser, SqRootTrait,
+    sqbool::SqBool, sqdatasize::SqDataSize, sqfloat::SqFloat, sqgroup::SqGroup, sqint::SqInt,
+    sqpath::SqPath, sqstring::SqString, squser::SqUser, SqRootTrait,
 };
 
 pub struct SqRoot {}
@@ -87,6 +87,14 @@ impl SqRootTrait for SqRoot {
 
     fn float(&self, value: Option<f64>) -> anyhow::Result<SqFloat> {
         Ok(SqFloat::new(value.unwrap_or(0f64)))
+    }
+
+    fn data_size(&self, value: Option<i64>) -> anyhow::Result<SqDataSize> {
+        let value = value.unwrap_or(0);
+        match u64::try_from(value) {
+            Ok(v) => Ok(SqDataSize::new(v)),
+            Err(_) => Err(anyhow!("Data size value must be non-negative")),
+        }
     }
 
     fn user(&self, opt_username: Option<&str>, opt_uid: Option<i64>) -> anyhow::Result<SqUser> {
