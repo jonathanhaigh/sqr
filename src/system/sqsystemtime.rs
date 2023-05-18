@@ -7,7 +7,7 @@ use std::time::{Duration, SystemTime};
 use anyhow::anyhow;
 
 use crate::primitive::Primitive;
-use crate::system::SqSystemTimeTrait;
+use crate::system::{sqduration::SqDuration, SqSystemTimeTrait};
 
 pub struct SqSystemTime {
     value: SystemTime,
@@ -32,18 +32,33 @@ impl SqSystemTime {
 
         Ok(Self { value })
     }
+
+    pub fn since_epoch(&self) -> anyhow::Result<Duration> {
+        self.value
+            .duration_since(SystemTime::UNIX_EPOCH)
+            .map_err(|e| {
+                anyhow!(
+                    "System time is {}s before UNIX epoch",
+                    e.duration().as_secs_f64()
+                )
+            })
+    }
 }
 
 impl SqSystemTimeTrait for SqSystemTime {
     fn to_primitive(&self) -> anyhow::Result<Primitive> {
-        let usecs = match self.value.duration_since(SystemTime::UNIX_EPOCH) {
-            Ok(duration) => duration.as_secs(),
-            Err(_) => return Err(anyhow!("Failed to convert system time to UNIX timestamp")),
-        };
-        let Ok(isecs) = i64::try_from(usecs) else {
-            return Err(anyhow!("Failed to convert UNIX timestamp {} to a 64-bit signed integer", usecs));
+        let secs_u64 = self.since_epoch()?.as_secs();
+        let Ok(secs_i64) = i64::try_from(secs_u64) else {
+            return Err(anyhow!(
+                "Failed to convert UNIX timestamp {} to a 64-bit signed integer",
+                secs_u64
+            ));
         };
 
-        Ok(Primitive::Int(isecs))
+        Ok(Primitive::Int(secs_i64))
+    }
+
+    fn duration_since_epoch(&self) -> anyhow::Result<SqDuration> {
+        Ok(SqDuration::new(self.since_epoch()?))
     }
 }
