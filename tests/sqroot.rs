@@ -7,7 +7,8 @@ use std::env::var as env_var;
 use serde_json::json;
 
 use integration_test_util::{
-    get_query, test_query_err, test_query_ok, test_simple_query_err, test_simple_query_ok,
+    get_query, test_query_err, test_query_ok, test_simple_query_approx_f64_ulp,
+    test_simple_query_err, test_simple_query_ok,
 };
 use sqr::error::ErrorKind;
 
@@ -35,6 +36,23 @@ test_simple_query_ok!(
     default_stop, "<ints(start=10, step=2)[:5]", json!([10, 12, 14, 16, 18]);
     default_step, "<ints(start=10, stop=15)[:5]", json!([10, 11, 12, 13, 14]);
     default_all, "<ints[:5]", json!([0, 1, 2, 3, 4]);
+);
+
+test_simple_query_approx_f64_ulp!(
+    sqroot_duration,
+    secs, "<duration(s=10)", 10f64, 4;
+    millis, "<duration(ms=10)", 10e-3f64, 4;
+    micros, "<duration(us=10)", 10e-6f64, 4;
+    nanos, "<duration(ns=10)", 10e-9f64, 4;
+    all, "<duration(s=111, ms=222, us=333, ns=444)", 111.222333444f64, 4;
+);
+
+test_simple_query_err!(
+    sqroot_duration_err,
+    neg_secs, "duration(s=-1)", System;
+    neg_millis, "duration(ms=-1)", System;
+    neg_micros, "duration(us=-1)", System;
+    neg_nanos, "duration(ns=-1)", System;
 );
 
 test_simple_query_ok!(
