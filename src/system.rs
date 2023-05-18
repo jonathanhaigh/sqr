@@ -8,6 +8,7 @@ use crate::sqvalue::SqBValue;
 
 pub mod sqbool;
 pub mod sqdatasize;
+pub mod sqduration;
 pub mod sqfile;
 pub mod sqfilemode;
 pub mod sqfloat;

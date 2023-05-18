@@ -80,12 +80,65 @@ impl TempFiles {
 
     // Rust doesn't seem to see that this function is actually used.
     #[allow(dead_code)]
+    pub fn link(mut self, rel_target_path: &str, rel_path: &str) -> Self {
+        let target_path = self.abs_path(rel_target_path);
+        let path = self.abs_path(rel_path);
+        std::fs::hard_link(&target_path, &path).unwrap();
+        self.paths.push(path);
+        self
+    }
+
+    // Rust doesn't seem to see that this function is actually used.
+    #[allow(dead_code)]
+    pub fn fifo(mut self, rel_path: &str, mode: u32) -> Self {
+        let path = self.abs_path(rel_path);
+        nix::unistd::mkfifo(&path, nix::sys::stat::Mode::from_bits(mode).unwrap()).unwrap();
+        self.paths.push(path);
+        self
+    }
+
+    // Rust doesn't seem to see that this function is actually used.
+    #[allow(dead_code)]
+    pub fn unix_socket(mut self, rel_path: &str) -> Self {
+        use nix::sys::socket::{bind, socket, AddressFamily, SockFlag, SockType, UnixAddr};
+        let path = self.abs_path(rel_path);
+        let sock = socket(AddressFamily::Unix, SockType::Raw, SockFlag::empty(), None).unwrap();
+        let sock_addr = UnixAddr::new(&path).unwrap();
+        bind(sock, &sock_addr).unwrap();
+        self.paths.push(path);
+        self
+    }
+
+    // Rust doesn't seem to see that this function is actually used.
+    #[allow(dead_code)]
+    pub fn truncate(self, rel_path: &str, len: i64) -> Self {
+        let path = self.abs_path(rel_path);
+        nix::unistd::truncate(&path, len).unwrap();
+        self
+    }
+
+    // Rust doesn't seem to see that this function is actually used.
+    #[allow(dead_code)]
     pub fn chmod(self, rel_path: &str, mode: u32) -> Self {
         use std::os::unix::fs::PermissionsExt;
         let path = self.abs_path(rel_path);
         let mut perms = std::fs::metadata(&path).unwrap().permissions();
         perms.set_mode(mode);
         std::fs::set_permissions(&path, perms).unwrap();
+        self
+    }
+
+    // Rust doesn't seem to see that this function is actually used.
+    #[allow(dead_code)]
+    pub fn utimes(self, rel_path: &str, atime: (i64, i64), mtime: (i64, i64)) -> Self {
+        use nix::sys::time::TimeVal;
+        let path = self.abs_path(rel_path);
+        nix::sys::stat::utimes(
+            &path,
+            &TimeVal::new(atime.0, atime.1),
+            &TimeVal::new(mtime.0, mtime.1),
+        )
+        .unwrap();
         self
     }
 }

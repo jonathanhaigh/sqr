@@ -93,9 +93,9 @@ impl SqFileTrait for SqFile {
         } else if file_type == SFlag::S_IFLNK {
             "symlink"
         } else if file_type == SFlag::S_IFBLK {
-            "block_device"
+            "block"
         } else if file_type == SFlag::S_IFCHR {
-            "char_device"
+            "char"
         } else if file_type == SFlag::S_IFIFO {
             "fifo"
         } else if file_type == SFlag::S_IFSOCK {
