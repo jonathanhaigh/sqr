@@ -751,6 +751,46 @@
                     ]
                 },
                 {
+                    "name": "duration",
+                    "doc": "Get an SqDuration system object",
+                    "return_type": "SqDuration",
+                    "return_sequence_type": "Single",
+                    "params": [
+                        {
+                            "index": 0,
+                            "name": "s",
+                            "doc": "Seconds to add to the duration",
+                            "type": "PrimitiveInt",
+                            "required": false,
+                            "default_value": 0
+                        },
+                        {
+                            "index": 1,
+                            "name": "ms",
+                            "doc": "Milliseconds to add to the duration",
+                            "type": "PrimitiveInt",
+                            "required": false,
+                            "default_value": 0
+                        },
+                        {
+                            "index": 2,
+                            "name": "us",
+                            "doc": "Microseconds to add to the duration",
+                            "type": "PrimitiveInt",
+                            "required": false,
+                            "default_value": 0
+                        },
+                        {
+                            "index": 3,
+                            "name": "ns",
+                            "doc": "Nanoseconds to add to the duration",
+                            "type": "PrimitiveInt",
+                            "required": false,
+                            "default_value": 0
+                        }
+                    ]
+                },
+                {
                     "name": "string",
                     "doc": "Get an SqString system object",
                     "return_type": "SqString",

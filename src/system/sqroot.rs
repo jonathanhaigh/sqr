@@ -5,14 +5,16 @@
 use std::env;
 use std::iter::Iterator;
 use std::path::PathBuf;
+use std::time::Duration;
 
 use anyhow::{anyhow, ensure};
 
 use crate::primitive::Primitive;
 use crate::sqvalue::SqValueSequence;
 use crate::system::{
-    sqbool::SqBool, sqdatasize::SqDataSize, sqfloat::SqFloat, sqgroup::SqGroup, sqint::SqInt,
-    sqpath::SqPath, sqstring::SqString, squser::SqUser, SqRootTrait,
+    sqbool::SqBool, sqdatasize::SqDataSize, sqduration::SqDuration, sqfloat::SqFloat,
+    sqgroup::SqGroup, sqint::SqInt, sqpath::SqPath, sqstring::SqString, squser::SqUser,
+    SqRootTrait,
 };
 
 pub struct SqRoot {}
@@ -87,6 +89,40 @@ impl SqRootTrait for SqRoot {
 
     fn float(&self, value: Option<f64>) -> anyhow::Result<SqFloat> {
         Ok(SqFloat::new(value.unwrap_or(0f64)))
+    }
+
+    fn duration(
+        &self,
+        s: Option<i64>,
+        ms: Option<i64>,
+        us: Option<i64>,
+        ns: Option<i64>,
+    ) -> anyhow::Result<SqDuration> {
+        let s_duration = Duration::from_secs(
+            u64::try_from(s.unwrap_or(0)).map_err(|_| anyhow!("s argument must be nonnegative"))?,
+        );
+        let ms_duration = Duration::from_millis(
+            u64::try_from(ms.unwrap_or(0))
+                .map_err(|_| anyhow!("ms argument must be nonnegative"))?,
+        );
+        let us_duration = Duration::from_micros(
+            u64::try_from(us.unwrap_or(0))
+                .map_err(|_| anyhow!("us argument must be nonnegative"))?,
+        );
+        let ns_duration = Duration::from_nanos(
+            u64::try_from(ns.unwrap_or(0))
+                .map_err(|_| anyhow!("ns argument must be nonnegative"))?,
+        );
+
+        let opt_duration = s_duration
+            .checked_add(ms_duration)
+            .and_then(|d| d.checked_add(us_duration))
+            .and_then(|d| d.checked_add(ns_duration));
+
+        match opt_duration {
+            Some(d) => Ok(SqDuration::new(d)),
+            None => Err(anyhow!("Duration does not fit into SqDuration type.")),
+        }
     }
 
     fn data_size(&self, value: Option<i64>) -> anyhow::Result<SqDataSize> {
