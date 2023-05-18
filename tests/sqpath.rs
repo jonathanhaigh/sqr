@@ -278,12 +278,12 @@ fn sqpath_children_skip_default_permission_denied() {
     let temp_files = TempFiles::new()
         .dir("dir1")
         .file("dir1/file1")
-        .chmod("dir1", 0222);
+        .chmod("dir1", 0o222);
     let query = format!("<path(\"{}\").<children", &temp_files[0]);
 
     test_query_err(&query, ErrorKind::System);
 
-    temp_files.chmod("dir1", 0777);
+    temp_files.chmod("dir1", 0o777);
 }
 
 #[test]
@@ -291,7 +291,7 @@ fn sqpath_children_skip_default_permission_true() {
     let temp_files = TempFiles::new()
         .dir("dir1")
         .file("dir1/file1")
-        .chmod("dir1", 0222);
+        .chmod("dir1", 0o222);
     let query = format!(
         "<path(\"{}\").<children(skip_permission_denied=true)",
         &temp_files[0]
@@ -302,7 +302,7 @@ fn sqpath_children_skip_default_permission_true() {
         Vec::<String>::new()
     );
 
-    temp_files.chmod("dir1", 0777);
+    temp_files.chmod("dir1", 0o777);
 }
 
 #[test]
@@ -310,7 +310,7 @@ fn sqpath_children_skip_default_permission_false() {
     let temp_files = TempFiles::new()
         .dir("dir1")
         .file("dir1/file1")
-        .chmod("dir1", 0222);
+        .chmod("dir1", 0o222);
     let query = format!(
         "<path(\"{}\").<children(skip_permission_denied=false)",
         &temp_files[0]
@@ -318,7 +318,7 @@ fn sqpath_children_skip_default_permission_false() {
 
     test_query_err(&query, ErrorKind::System);
 
-    temp_files.chmod("dir1", 0777);
+    temp_files.chmod("dir1", 0o777);
 }
 
 // TODO: tests SqPath::children same_filesystem param?

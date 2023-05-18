@@ -112,7 +112,7 @@ fn sqfile_mode(
     let temp_files = TempFiles::new().file("file1").chmod("file1", mode);
     let query = format!("<path(\"{}\").<file.<mode", &temp_files[0]);
     test_query_ok(&query, json!(mode));
-    temp_files.chmod("file1", 0777);
+    temp_files.chmod("file1", 0o777);
 }
 
 type SAndUs = (i64, i64);
