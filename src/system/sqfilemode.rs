@@ -19,7 +19,7 @@ impl SqFileMode {
 
 impl SqFileModeTrait for SqFileMode {
     fn to_primitive(&self) -> anyhow::Result<Primitive> {
-        Ok(Primitive::Int(i64::from(self.mode.bits())))
+        Ok(Primitive::Int(i128::from(self.mode.bits())))
     }
 
     fn permissions(&self) -> anyhow::Result<SqInt> {
@@ -27,7 +27,7 @@ impl SqFileModeTrait for SqFileMode {
             .mode
             .intersection(Mode::S_IRWXU | Mode::S_IRWXG | Mode::S_IRWXO)
             .bits();
-        Ok(SqInt::new(i64::from(num)))
+        Ok(SqInt::from(num))
     }
 
     fn suid(&self) -> anyhow::Result<SqBool> {

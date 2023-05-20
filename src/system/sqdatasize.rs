@@ -2,8 +2,6 @@
 //
 // SPDX-License-Identifier: MIT
 
-use anyhow::anyhow;
-
 use crate::primitive::Primitive;
 use crate::system::{sqfloat::SqFloat, sqint::SqInt, SqDataSizeTrait};
 
@@ -30,23 +28,11 @@ impl SqDataSize {
 
 impl SqDataSizeTrait for SqDataSize {
     fn to_primitive(&self) -> anyhow::Result<Primitive> {
-        match i64::try_from(self.value) {
-            Err(_) => Err(anyhow!(
-                "Failed to convert SqDataSize {}B to 64-bit signed integer",
-                self.value
-            )),
-            Ok(value_i64) => Ok(Primitive::Int(value_i64)),
-        }
+        Ok(Primitive::Int(i128::from(self.value)))
     }
 
     fn b(&self) -> anyhow::Result<SqInt> {
-        match i64::try_from(self.value) {
-            Ok(value_i64) => Ok(SqInt::new(value_i64)),
-            Err(_) => Err(anyhow!(
-                "Failed to convert data size {}B to 64-bit signed integer",
-                self.value
-            )),
-        }
+        Ok(SqInt::from(self.value))
     }
 
     fn kib(&self) -> anyhow::Result<SqFloat> {

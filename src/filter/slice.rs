@@ -981,7 +981,7 @@ mod tests {
     use crate::schema;
     use crate::test_util::{fake_field_call_ast, fake_int_literal, gen_sqbvalue_seq, SequenceType};
 
-    fn fake_slice(start: Option<i64>, stop: Option<i64>, step: Option<i64>) -> ast::Slice {
+    fn fake_slice(start: Option<i128>, stop: Option<i128>, step: Option<i128>) -> ast::Slice {
         ast::Slice {
             span: (0, 0).into(),
             opt_start: start.map(fake_int_literal),
@@ -991,9 +991,9 @@ mod tests {
     }
 
     fn test_slice_case(
-        start: Option<i64>,
-        stop: Option<i64>,
-        step: Option<i64>,
+        start: Option<i128>,
+        stop: Option<i128>,
+        step: Option<i128>,
         seq_type: SequenceType,
         seq_len: usize,
     ) -> std::result::Result<(), String> {
@@ -1005,7 +1005,7 @@ mod tests {
         let got = filter
             .filter(seq)
             .unwrap()
-            .map(|f| i64::try_from(f.unwrap().get_primitive(&call_info).unwrap()).unwrap())
+            .map(|f| i128::try_from(f.unwrap().get_primitive(&call_info).unwrap()).unwrap())
             .collect::<Vec<_>>();
 
         let expected = slyce::Slice {
@@ -1014,7 +1014,7 @@ mod tests {
             step: step.map(|i| isize::try_from(i).unwrap()).into(),
         }
         .apply(
-            (0..i64::try_from(seq_len).unwrap())
+            (0..i128::try_from(seq_len).unwrap())
                 .collect::<Vec<_>>()
                 .as_slice(),
         )
@@ -1043,9 +1043,9 @@ mod tests {
         steps.push(None);
 
         // element types in the input iterators to itertools::multi_cartesian_product must be the
-        // same, so convert the SequenceTypes to i64s and wrap in Some.
+        // same, so convert the SequenceTypes to i128s and wrap in Some.
         let seq_types = SequenceType::iter()
-            .map(|v| Some(v as i64))
+            .map(|v| Some(v as i128))
             .collect::<Vec<_>>();
 
         // element types in the input iterators to itertools::multi_cartesian_product must be the

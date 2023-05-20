@@ -186,7 +186,7 @@ pub enum Error {
 
         type_name: String,
         field_name: String,
-        index: i64,
+        index: i128,
         len: usize,
     },
 

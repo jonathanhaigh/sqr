@@ -99,7 +99,7 @@ pub enum Filter {
 #[derive(Clone, Debug, PartialEq)]
 pub struct IntLiteral {
     pub span: SourceSpan,
-    pub value: i64,
+    pub value: i128,
 }
 
 /// AST node representing a `slice` grammar item in a `filter_pack`: a Python style slice.

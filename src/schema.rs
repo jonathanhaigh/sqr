@@ -167,7 +167,7 @@ impl ParamSchema {
 /// A representation of a parameter's default value
 #[derive(Clone, Debug, PartialEq)]
 pub enum DefaultValue {
-    Int(i64),
+    Int(i128),
     Float(f64),
     Str(&'static str),
     Bool(bool),

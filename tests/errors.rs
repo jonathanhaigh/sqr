@@ -10,8 +10,8 @@ test_simple_query_err!(
     errors,
     lex, "&", Lex;
     unexpected_token, "true", UnexpectedToken;
-    int_too_big, "int(9223372036854775808)", ParseValue; // i64::MAX + 1
-    int_too_small, "int(-9223372036854775809)", ParseValue; // i64::MAX + 1
+    int_too_big, "int(170141183460469231731687303715884105728)", ParseValue; // i128::MAX + 1
+    int_too_small, "int(-170141183460469231731687303715884105729)", ParseValue; // i128::MIN - 1
     float_too_big, "float(10.0E+308)", ParseValue;
     float_too_small, "float(10.0E+308)", ParseValue;
     invalid_string, r#"string("\uxxxx")"#, ParseValue;

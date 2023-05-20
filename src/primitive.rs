@@ -46,7 +46,7 @@ impl fmt::Display for PrimitiveKind {
 #[derive(Clone, Debug, PartialEq, Serialize)]
 #[serde(untagged)]
 pub enum Primitive {
-    Int(i64),
+    Int(i128),
     Float(f64),
     Str(String),
     Bool(bool),
@@ -87,40 +87,131 @@ impl cmp::PartialOrd<Primitive> for Primitive {
     }
 }
 
+impl From<i128> for Primitive {
+    fn from(v: i128) -> Self {
+        Self::Int(v)
+    }
+}
+
+impl From<i64> for Primitive {
+    fn from(v: i64) -> Self {
+        Self::Int(i128::from(v))
+    }
+}
+
+impl From<i32> for Primitive {
+    fn from(v: i32) -> Self {
+        Self::Int(i128::from(v))
+    }
+}
+
+impl From<u64> for Primitive {
+    fn from(v: u64) -> Self {
+        Self::Int(i128::from(v))
+    }
+}
+
+impl From<u32> for Primitive {
+    fn from(v: u32) -> Self {
+        Self::Int(i128::from(v))
+    }
+}
+
+impl From<f64> for Primitive {
+    fn from(v: f64) -> Self {
+        Self::Float(v)
+    }
+}
+
+impl From<f32> for Primitive {
+    fn from(v: f32) -> Self {
+        Self::Float(f64::from(v))
+    }
+}
+
+impl From<String> for Primitive {
+    fn from(v: String) -> Self {
+        Self::Str(v)
+    }
+}
+
 /// Error returned by `T::try_from(primitive)` when the primitive is the wrong kind to be converted
 /// to `T`.
 #[derive(Debug, ThisError)]
-#[error("Failed to convert primitive to {to}")]
+#[error("{reason}")]
 pub struct TryFromPrimitiveError {
-    to: String,
+    reason: String,
 }
 
-/// Generate an implementation of `TryFrom<Primitive>` for a type.
-///
-/// # Parameters
-/// - `$t`: the type to implement `TryFrom<Primitive>` for.
-/// - `$variant`: the variant of `Primitive` that can be converted into `$t`.
-macro_rules! generate_try_from_for_primitive {
-    ($t:ty, $variant:ident) => {
-        impl TryFrom<Primitive> for $t {
-            type Error = TryFromPrimitiveError;
-            fn try_from(value: Primitive) -> std::result::Result<Self, Self::Error> {
-                if let Primitive::$variant(v) = value {
-                    Ok(v)
-                } else {
-                    Err(TryFromPrimitiveError {
-                        to: stringify!($t).to_owned(),
-                    })
-                }
-            }
+impl TryFromPrimitiveError {
+    pub fn type_mismatch(value: &Primitive, target: &str) -> Self {
+        Self {
+            reason: format!(
+                "Cannot convert primitive of type {} to {}",
+                value.kind(),
+                target
+            ),
         }
-    };
+    }
+
+    pub fn int_conversion(value: i128, target: &str) -> Self {
+        Self {
+            reason: format!("Integer value {} does not fit in type {}", value, target),
+        }
+    }
 }
 
-generate_try_from_for_primitive!(i64, Int);
-generate_try_from_for_primitive!(f64, Float);
-generate_try_from_for_primitive!(String, Str);
-generate_try_from_for_primitive!(bool, Bool);
+impl TryFrom<Primitive> for i128 {
+    type Error = TryFromPrimitiveError;
+    fn try_from(value: Primitive) -> std::result::Result<Self, Self::Error> {
+        match value {
+            Primitive::Int(v) => Ok(v),
+            _ => Err(TryFromPrimitiveError::type_mismatch(&value, "i128")),
+        }
+    }
+}
+
+impl TryFrom<Primitive> for i64 {
+    type Error = TryFromPrimitiveError;
+    fn try_from(value: Primitive) -> std::result::Result<Self, Self::Error> {
+        match value {
+            Primitive::Int(v) => Ok(
+                i64::try_from(v).map_err(|_| TryFromPrimitiveError::int_conversion(v, "i64"))?
+            ),
+            _ => Err(TryFromPrimitiveError::type_mismatch(&value, "i64")),
+        }
+    }
+}
+
+impl TryFrom<Primitive> for f64 {
+    type Error = TryFromPrimitiveError;
+    fn try_from(value: Primitive) -> std::result::Result<Self, Self::Error> {
+        match value {
+            Primitive::Float(v) => Ok(v),
+            _ => Err(TryFromPrimitiveError::type_mismatch(&value, "f64")),
+        }
+    }
+}
+
+impl TryFrom<Primitive> for String {
+    type Error = TryFromPrimitiveError;
+    fn try_from(value: Primitive) -> std::result::Result<Self, Self::Error> {
+        match value {
+            Primitive::Str(v) => Ok(v),
+            _ => Err(TryFromPrimitiveError::type_mismatch(&value, "String")),
+        }
+    }
+}
+
+impl TryFrom<Primitive> for bool {
+    type Error = TryFromPrimitiveError;
+    fn try_from(value: Primitive) -> std::result::Result<Self, Self::Error> {
+        match value {
+            Primitive::Bool(v) => Ok(v),
+            _ => Err(TryFromPrimitiveError::type_mismatch(&value, "Bool")),
+        }
+    }
+}
 
 /// Generate an implementation of `util::TryAsRef` for a primitive type.
 ///
@@ -147,7 +238,7 @@ macro_rules! generate_try_as_ref_for_primitive {
     };
 }
 
-generate_try_as_ref_for_primitive!(i64, Int);
+generate_try_as_ref_for_primitive!(i128, Int);
 generate_try_as_ref_for_primitive!(f64, Float);
 generate_try_as_ref_for_primitive!(str, Str);
 generate_try_as_ref_for_primitive!(bool, Bool);
@@ -265,20 +356,24 @@ mod tests {
     }
 
     #[rstest]
-    #[case::int_int(Int(10), Some(10i64))]
-    #[case::int_float(Int(10), Option::<f64>::None)]
+    #[case::int_i128(Int(i128::MAX), Some(i128::MAX))]
+    #[case::int_i64_max(Int(9_223_372_036_854_775_807i128), Some(i64::MAX))]
+    #[case::int_i64_min(Int(-9_223_372_036_854_775_808i128), Some(i64::MIN))]
+    #[case::int_i64_too_big(Int(i128::MAX), Option::<i64>::None)]
+    #[case::int_i64_too_small(Int(i128::MIN), Option::<i64>::None)]
+    #[case::int_f64(Int(10), Option::<f64>::None)]
     #[case::int_str(Int(10), Option::<String>::None)]
     #[case::int_bool(Int(10), Option::<bool>::None)]
-    #[case::float_int(Float(10.1), Option::<i64>::None)]
-    #[case::float_float(Float(10.1), Some(10.1f64))]
+    #[case::float_i128(Float(10.1), Option::<i128>::None)]
+    #[case::float_f64(Float(10.1), Some(10.1f64))]
     #[case::float_str(Float(10.1), Option::<String>::None)]
     #[case::float_bool(Float(10.1), Option::<bool>::None)]
-    #[case::str_int(Str("x".to_owned()), Option::<i64>::None)]
-    #[case::str_float(Str("x".to_owned()), Option::<f64>::None)]
+    #[case::str_i128(Str("x".to_owned()), Option::<i128>::None)]
+    #[case::str_f64(Str("x".to_owned()), Option::<f64>::None)]
     #[case::str_str(Str("x".to_owned()), Some("x".to_owned()))]
     #[case::str_bool(Str("x".to_owned()), Option::<bool>::None)]
-    #[case::bool_int(Bool(true), Option::<i64>::None)]
-    #[case::bool_float(Bool(true), Option::<f64>::None)]
+    #[case::bool_i128(Bool(true), Option::<i128>::None)]
+    #[case::bool_f64(Bool(true), Option::<f64>::None)]
     #[case::bool_str(Bool(true), Option::<String>::None)]
     #[case::bool_true(Bool(true), Some(true))]
     #[case::bool_false(Bool(false), Some(false))]
@@ -294,20 +389,20 @@ mod tests {
     }
 
     #[rstest]
-    #[case::int_int(Int(10), Some(&10i64))]
-    #[case::int_float(Int(10), Option::<&f64>::None)]
+    #[case::int_i128(Int(10), Some(&10i128))]
+    #[case::int_f64(Int(10), Option::<&f64>::None)]
     #[case::int_str(Int(10), Option::<&str>::None)]
     #[case::int_bool(Int(10), Option::<&bool>::None)]
-    #[case::float_int(Float(10.1), Option::<&i64>::None)]
-    #[case::float_float(Float(10.1), Some(&10.1f64))]
+    #[case::float_i128(Float(10.1), Option::<&i128>::None)]
+    #[case::float_f64(Float(10.1), Some(&10.1f64))]
     #[case::float_str(Float(10.1), Option::<&str>::None)]
     #[case::float_bool(Float(10.1), Option::<&bool>::None)]
-    #[case::str_int(Str("x".to_owned()), Option::<&i64>::None)]
-    #[case::str_float(Str("x".to_owned()), Option::<&f64>::None)]
+    #[case::str_i128(Str("x".to_owned()), Option::<&i128>::None)]
+    #[case::str_f64(Str("x".to_owned()), Option::<&f64>::None)]
     #[case::str_str(Str("x".to_owned()), Some("x"))]
     #[case::str_bool(Str("x".to_owned()), Option::<&bool>::None)]
-    #[case::bool_int(Bool(true), Option::<&i64>::None)]
-    #[case::bool_float(Bool(true), Option::<&f64>::None)]
+    #[case::bool_i128(Bool(true), Option::<&i128>::None)]
+    #[case::bool_f64(Bool(true), Option::<&f64>::None)]
     #[case::bool_str(Bool(true), Option::<&str>::None)]
     #[case::bool_true(Bool(true), Some(&true))]
     #[case::bool_false(Bool(false), Some(&false))]
