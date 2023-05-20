@@ -59,15 +59,7 @@ impl SqFileTrait for SqFile {
     }
 
     fn inode(&self) -> anyhow::Result<SqInt> {
-        let inode = self.stat.st_ino;
-        match i64::try_from(inode) {
-            Ok(inode_i64) => Ok(SqInt::new(inode_i64)),
-            Err(_) => Err(anyhow!(
-                "Failed to convert inode number {} for {} to 64-bit signed integer",
-                inode,
-                self.path.to_string_lossy()
-            )),
-        }
+        Ok(SqInt::from(self.stat.st_ino))
     }
 
     fn size(&self) -> anyhow::Result<SqDataSize> {
@@ -110,15 +102,7 @@ impl SqFileTrait for SqFile {
     }
 
     fn hard_link_count(&self) -> anyhow::Result<SqInt> {
-        let count = self.stat.st_nlink;
-        match i64::try_from(count) {
-            Ok(count_i64) => Ok(SqInt::new(count_i64)),
-            Err(_) => Err(anyhow!(
-                "Failed to convert hard link count {} for {} to 64-bit signed integer",
-                count,
-                self.path.to_string_lossy()
-            )),
-        }
+        Ok(SqInt::from(self.stat.st_nlink))
     }
 
     fn mode(&self) -> anyhow::Result<SqFileMode> {
@@ -140,7 +124,7 @@ impl SqFileTrait for SqFile {
     }
 
     fn block_count(&self) -> anyhow::Result<SqInt> {
-        Ok(SqInt::new(self.stat.st_blocks))
+        Ok(SqInt::from(self.stat.st_blocks))
     }
 
     fn user(&self) -> anyhow::Result<SqUser> {

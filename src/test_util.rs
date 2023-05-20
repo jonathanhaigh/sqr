@@ -114,7 +114,7 @@ pub fn get_seq_type<T>(seq: &DynSequence<T>) -> SequenceType {
     }
 }
 
-pub fn fake_int_literal(value: i64) -> ast::IntLiteral {
+pub fn fake_int_literal(value: i128) -> ast::IntLiteral {
     ast::IntLiteral {
         span: (0, 0).into(),
         value,

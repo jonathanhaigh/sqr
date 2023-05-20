@@ -51,11 +51,11 @@ impl SqUser {
 
 impl SqUserTrait for SqUser {
     fn to_primitive(&self) -> anyhow::Result<Primitive> {
-        Ok(Primitive::Int(i64::from(self.user.uid.as_raw())))
+        Ok(Primitive::from(self.user.uid.as_raw()))
     }
 
     fn uid(&self) -> anyhow::Result<SqInt> {
-        Ok(SqInt::new(i64::from(self.user.uid.as_raw())))
+        Ok(SqInt::from(self.user.uid.as_raw()))
     }
 
     fn username(&self) -> anyhow::Result<SqString> {

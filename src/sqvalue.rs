@@ -229,13 +229,13 @@ mod tests {
 
     #[test]
     fn test_dyn_sequence_empty() {
-        let mut empty = DynSequence::<i64>::empty();
+        let mut empty = DynSequence::<i128>::empty();
         assert_eq!(empty.next(), None);
     }
 
     #[test]
     fn test_dyn_sequence_default() {
-        let mut def = DynSequence::<i64>::default();
+        let mut def = DynSequence::<i128>::default();
         assert_eq!(def.next(), None);
     }
 

@@ -746,9 +746,9 @@ impl<'q> Parser<'q> {
     }
 
     // Int
-    fn parse_int(&mut self) -> OptResult<(SourceSpan, i64)> {
+    fn parse_int(&mut self) -> OptResult<(SourceSpan, i128)> {
         let tok = return_none_or_err!(self.accept_token(TokenKind::Int));
-        match tok.text(self.query).parse::<i64>() {
+        match tok.text(self.query).parse::<i128>() {
             Ok(i) => Ok(Some((tok.span, i))),
             Err(e) => Err(Box::new(Error::ParseValue {
                 span: tok.span,
@@ -1206,7 +1206,7 @@ mod tests {
         ),
         (none, int_a10, "a10", Int),
         (none, int_10p1, "10.1", Int),
-        (err, int_overflow, "99999999999999999999"),
+        (err, int_overflow, "170141183460469231731687303715884105728"), // i128::MAX + 1
     );
 
     gen_parse_tests!(
@@ -1577,7 +1577,11 @@ mod tests {
         ),
         (none, int_literal_eof, "", Int),
         (none, int_literal_bool, "true", Int),
-        (err, int_literal_overflow, "99999999999999999999"),
+        (
+            err,
+            int_literal_overflow,
+            "170141183460469231731687303715884105728"
+        ), // i128::MAX + 1
     );
 
     gen_parse_tests!(

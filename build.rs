@@ -302,7 +302,7 @@ impl<'es> SchemaGenerator<'es> {
             (_, JsonValue::Null) => Ok(quote! {DefaultValue::Null}),
             ("PrimitiveBool", JsonValue::Bool(b)) => Ok(quote! {DefaultValue::Bool(#b)}),
             ("PrimitiveInt", JsonValue::Number(n)) if n.is_i64() => {
-                let i = n.as_i64().unwrap();
+                let i = i128::from(n.as_i64().unwrap());
                 Ok(quote! {DefaultValue::Int(#i)})
             }
             // Note that serde_json::value::Number::is_f64() returns true only if the number is not
@@ -390,7 +390,7 @@ impl<'es> SqTypeTraitGenerator<'es> {
         let param_name = format_ident!("p_{}", &param_ext.name);
         let mut param_type = match &param_ext.ty[..] {
             "PrimitiveBool" => quote! {bool},
-            "PrimitiveInt" => quote! {i64},
+            "PrimitiveInt" => quote! {i128},
             "PrimitiveFloat" => quote! {f64},
             "PrimitiveString" => quote! {&str},
             // The internal schema generation should already have errored if the type is invalid so
@@ -563,7 +563,7 @@ impl<'es> SqValueImplementor<'es> {
                     // Unless it's a &str we'll want to clone it before dispatching it to the
                     // field-specific getter.
                     "PrimitiveBool" => (quote! {bool}, quote! {.copied()}),
-                    "PrimitiveInt" => (quote! {i64}, quote! {.copied()}),
+                    "PrimitiveInt" => (quote! {i128}, quote! {.copied()}),
                     "PrimitiveFloat" => (quote! {f64}, quote! {.copied()}),
                     "PrimitiveString" => (quote! {str}, quote! {}),
                     t => panic!("Unrecognized primitive type {}", t),

@@ -47,15 +47,7 @@ impl SqSystemTime {
 
 impl SqSystemTimeTrait for SqSystemTime {
     fn to_primitive(&self) -> anyhow::Result<Primitive> {
-        let secs_u64 = self.since_epoch()?.as_secs();
-        let Ok(secs_i64) = i64::try_from(secs_u64) else {
-            return Err(anyhow!(
-                "Failed to convert UNIX timestamp {} to a 64-bit signed integer",
-                secs_u64
-            ));
-        };
-
-        Ok(Primitive::Int(secs_i64))
+        Ok(Primitive::from(self.since_epoch()?.as_secs()))
     }
 
     fn duration_since_epoch(&self) -> anyhow::Result<SqDuration> {

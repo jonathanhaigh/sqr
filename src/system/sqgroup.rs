@@ -38,11 +38,11 @@ impl SqGroup {
 
 impl SqGroupTrait for SqGroup {
     fn to_primitive(&self) -> anyhow::Result<Primitive> {
-        Ok(Primitive::Int(i64::from(self.group.gid.as_raw())))
+        Ok(Primitive::from(self.group.gid.as_raw()))
     }
 
     fn gid(&self) -> anyhow::Result<SqInt> {
-        Ok(SqInt::new(i64::from(self.group.gid.as_raw())))
+        Ok(SqInt::from(self.group.gid.as_raw()))
     }
 
     fn name(&self) -> anyhow::Result<SqString> {

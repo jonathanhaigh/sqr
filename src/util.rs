@@ -93,8 +93,8 @@ pub trait InfallibleAbs {
     fn infallible_abs(&self) -> Self::Output;
 }
 
-impl InfallibleAbs for i64 {
-    type Output = u64;
+impl InfallibleAbs for i128 {
+    type Output = u128;
 
     fn infallible_abs(&self) -> Self::Output {
         self.abs_diff(0)
@@ -113,9 +113,6 @@ where
 }
 
 /// Get the absolute value of a number as a `usize`.
-///
-/// This function can fail e.g. when converting the absolute value of an i64 into a usize on a
-/// 32-bit platform.
 pub fn abs_usize<T>(value: T) -> StdResult<usize, Box<ConvertIntError>>
 where
     T: InfallibleAbs,
@@ -200,10 +197,10 @@ pub enum CategorizedInt {
     Negative(usize),
 }
 
-impl TryFrom<i64> for CategorizedInt {
+impl TryFrom<i128> for CategorizedInt {
     type Error = Box<ConvertIntError>;
 
-    fn try_from(operand: i64) -> StdResult<Self, Self::Error> {
+    fn try_from(operand: i128) -> StdResult<Self, Self::Error> {
         if operand.is_negative() {
             Ok(Self::Negative(abs_usize(operand)?))
         } else {
@@ -257,7 +254,12 @@ mod tests {
     #[case::i64_min_to_usize(i64::MIN, Option::<usize>::None)]
     #[case::i64_minus1_to_usize(-1i64, Option::<usize>::None)]
     #[case::usize_0_to_i64(0usize, Some(0i64))]
-    #[case::usize_max_to_i64(usize::MAX, none_on_64_bit_arch(0i64))]
+    #[case::usize_max_to_i64(usize::MAX, none_on_64_bit_arch(4_294_967_295i64))]
+    #[case::i128_0_to_usize(0i128, Some(0usize))]
+    #[case::i128_max_to_usize(i128::MAX, Option::<usize>::None)]
+    #[case::i128_min_to_usize(i128::MIN, Option::<usize>::None)]
+    #[case::i128_minus1_to_usize(-1i128, Option::<usize>::None)]
+    #[case::usize_0_to_i128(0usize, Some(0i128))]
     fn test_convert_int<To, Input>(#[case] input: Input, #[case] expected: Option<To>)
     where
         To: Copy + ToString + TryFrom<Input> + PartialEq + fmt::Debug,
@@ -274,11 +276,11 @@ mod tests {
     // --------------------------------------------------------------------------------------------
 
     #[rstest]
-    #[case::zero(0i64, 0u64)]
-    #[case::one(1i64, 1u64)]
-    #[case::minus_one(-1i64, 1u64)]
-    #[case::max(i64::MAX, 9_223_372_036_854_775_807u64)]
-    #[case::max(i64::MIN, 9_223_372_036_854_775_808u64)]
+    #[case::zero(0i128, 0u128)]
+    #[case::one(1i128, 1u128)]
+    #[case::minus_one(-1i128, 1u128)]
+    #[case::max(i128::MAX, 170_141_183_460_469_231_731_687_303_715_884_105_727u128)]
+    #[case::max(i128::MIN, 170_141_183_460_469_231_731_687_303_715_884_105_728u128)]
     fn test_abs<To, Input>(#[case] input: Input, #[case] output: To)
     where
         To: fmt::Debug,
@@ -293,13 +295,15 @@ mod tests {
     // --------------------------------------------------------------------------------------------
 
     #[rstest]
-    #[case::i64_0(0, Some(0))]
-    #[case::i64_1(1, Some(1))]
-    #[case::i64_minus1(-1, Some(1))]
-    #[case::i64_32_max(2_147_483_647, Some(2_147_483_647))]
-    #[case::i64_32_min(-2_147_483_648, Some(2_147_483_648))]
-    #[case::i64_max(i64::MAX, none_on_32_bit_arch(9_223_372_036_854_775_807))]
-    #[case::i64_max(i64::MIN, none_on_32_bit_arch(9_223_372_036_854_775_808))]
+    #[case::i128_0(0, Some(0usize))]
+    #[case::i128_1(1, Some(1usize))]
+    #[case::i128_minus1(-1, Some(1usize))]
+    #[case::i128_32_max(2_147_483_647, Some(2_147_483_647usize))]
+    #[case::i128_32_min(-2_147_483_648, Some(2_147_483_648usize))]
+    #[case::i128_64_max(9_223_372_036_854_775_807i128, Some(9_223_372_036_854_775_807usize))]
+    #[case::i128_64_min(-9_223_372_036_854_775_808i128, Some(9_223_372_036_854_775_808usize))]
+    #[case::i128_max(i128::MAX, None)]
+    #[case::i128_min(i128::MIN, None)]
     fn test_abs_usize<Input>(#[case] input: Input, #[case] expected: Option<usize>)
     where
         Input: InfallibleAbs,
@@ -396,19 +400,20 @@ mod tests {
     // --------------------------------------------------------------------------------------------
 
     #[rstest]
-    #[case::i64_0(0i64, Some(NonNegative(0)))]
-    #[case::i64_1(1i64, Some(NonNegative(1)))]
-    #[case::i64_32_max(2_147_483_647i64, Some(NonNegative(2_147_483_647usize)))]
-    #[case::i64_max(
-        i64::MAX,
+    #[case::i128_0(0i128, Some(NonNegative(0)))]
+    #[case::i128_1(1i128, Some(NonNegative(1)))]
+    #[case::i128_minus1(-1i128, Some(Negative(1)))]
+    #[case::i128_32_max(2_147_483_647i128, Some(NonNegative(2_147_483_647usize)))]
+    #[case::i128_32_min(-2_147_483_648i128, Some(Negative(2_147_483_648usize)))]
+    #[case::i128_64_max(
+        9_223_372_036_854_775_807i128,
         none_on_32_bit_arch(NonNegative(9_223_372_036_854_775_807usize))
     )]
-    #[case::i64_minus1(-1i64, Some(Negative(1)))]
-    #[case::i64_32_min(-2_147_483_648i64, Some(Negative(2_147_483_648usize)))]
-    #[case::i64_min(
-        i64::MIN,
+    #[case::i128_64_min(-9_223_372_036_854_775_808i128,
         none_on_32_bit_arch(Negative(9_223_372_036_854_775_808usize))
     )]
+    #[case::i128_max(i128::MAX, None)]
+    #[case::i128_min(i128::MIN, None)]
     fn test_categorized_int_try_from<T>(#[case] from: T, #[case] expected: Option<CategorizedInt>)
     where
         CategorizedInt: TryFrom<T>,

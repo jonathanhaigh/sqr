@@ -38,7 +38,7 @@ impl<'a> IndexFilter<'a> {
         }
     }
 
-    fn raw_index(&self) -> i64 {
+    fn raw_index(&self) -> i128 {
         self.int_literal.value
     }
 
@@ -236,9 +236,9 @@ mod tests {
 
         #[case] seq_len: usize,
 
-        #[case] index: i64,
+        #[case] index: i128,
 
-        #[case] expected: Option<i64>,
+        #[case] expected: Option<i128>,
     ) {
         let field_call_ast = fake_field_call_ast();
         let call_info = FieldCallInfo::new(&field_call_ast, schema::root_field());
@@ -253,7 +253,7 @@ mod tests {
                     .unwrap()
                     .get_primitive(&call_info)
                     .unwrap(),
-                Primitive::Int(v)
+                Primitive::from(v)
             ),
             None => assert!(filter.filter(seq).is_err()),
         }

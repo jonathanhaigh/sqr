@@ -53,26 +53,26 @@ impl SqRootTrait for SqRoot {
         }
     }
 
-    fn int(&self, p_value: Option<i64>) -> anyhow::Result<SqInt> {
+    fn int(&self, p_value: Option<i128>) -> anyhow::Result<SqInt> {
         Ok(SqInt::new(p_value.unwrap_or(0)))
     }
 
     fn ints(
         &self,
-        start: Option<i64>,
-        stop: Option<i64>,
-        step: Option<i64>,
+        start: Option<i128>,
+        stop: Option<i128>,
+        step: Option<i128>,
     ) -> anyhow::Result<SqValueSequence<SqInt>> {
         let start = start.unwrap_or(0);
-        let step_i64 = step.unwrap_or(1);
-        let step: usize = step_i64
+        let step_i128 = step.unwrap_or(1);
+        let step: usize = step_i128
             .try_into()
-            .map_err(|_| anyhow!("Invalid step option{}: must be > 0", step_i64))?;
+            .map_err(|_| anyhow!("Failed to convert step option {} to usize type", step_i128))?;
         ensure!(step > 0, "Invalid step option {}: must be > 0", step);
         // Only return an Iterator because:
-        // * Range<i64> isn't an ExactSizeIterator because on 32-bit platforms the size hint (a
-        //   usize) might not be big enough to hold the size of the range.
-        // * Range<i64> isn't a DoubleEndedIterator because the range could be infinite.
+        // * Range<i128> isn't an ExactSizeIterator because the size hint (a usize) might not be
+        // big enough to hold the size of the range.
+        // * Range<i128> isn't a DoubleEndedIterator because the range could be infinite.
         //
         // Perhaps we could add special cases for when the size fits into a usize. This field
         // probably isn't particularly useful for real-world applications though so it's probably
@@ -93,10 +93,10 @@ impl SqRootTrait for SqRoot {
 
     fn duration(
         &self,
-        s: Option<i64>,
-        ms: Option<i64>,
-        us: Option<i64>,
-        ns: Option<i64>,
+        s: Option<i128>,
+        ms: Option<i128>,
+        us: Option<i128>,
+        ns: Option<i128>,
     ) -> anyhow::Result<SqDuration> {
         let s_duration = Duration::from_secs(
             u64::try_from(s.unwrap_or(0)).map_err(|_| anyhow!("s argument must be nonnegative"))?,
@@ -125,7 +125,7 @@ impl SqRootTrait for SqRoot {
         }
     }
 
-    fn data_size(&self, value: Option<i64>) -> anyhow::Result<SqDataSize> {
+    fn data_size(&self, value: Option<i128>) -> anyhow::Result<SqDataSize> {
         let value = value.unwrap_or(0);
         match u64::try_from(value) {
             Ok(v) => Ok(SqDataSize::new(v)),
@@ -133,7 +133,7 @@ impl SqRootTrait for SqRoot {
         }
     }
 
-    fn user(&self, opt_username: Option<&str>, opt_uid: Option<i64>) -> anyhow::Result<SqUser> {
+    fn user(&self, opt_username: Option<&str>, opt_uid: Option<i128>) -> anyhow::Result<SqUser> {
         if let Some(username) = opt_username {
             if opt_uid.is_some() {
                 return Err(anyhow!(
@@ -156,7 +156,11 @@ impl SqRootTrait for SqRoot {
         SqUser::real()
     }
 
-    fn group(&self, opt_group_name: Option<&str>, opt_gid: Option<i64>) -> anyhow::Result<SqGroup> {
+    fn group(
+        &self,
+        opt_group_name: Option<&str>,
+        opt_gid: Option<i128>,
+    ) -> anyhow::Result<SqGroup> {
         if let Some(group_name) = opt_group_name {
             if opt_gid.is_some() {
                 return Err(anyhow!(

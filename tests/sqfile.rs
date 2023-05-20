@@ -14,7 +14,7 @@ fn sqfile_inode() {
     let temp_files = TempFiles::new().file("file1").link("file1", "file2");
     let query1 = format!("<path(\"{}\").<file.<inode", &temp_files[0]);
     let query2 = format!("<path(\"{}\").<file.<inode", &temp_files[1]);
-    assert_eq!(get_query_as::<i64>(&query1), get_query_as::<i64>(&query2));
+    assert_eq!(get_query_as::<i128>(&query1), get_query_as::<i128>(&query2));
 }
 
 #[rstest]

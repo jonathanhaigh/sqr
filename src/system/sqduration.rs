@@ -4,8 +4,6 @@
 
 use std::time::Duration;
 
-use anyhow::anyhow;
-
 use crate::primitive::Primitive;
 use crate::system::{sqint::SqInt, SqDurationTrait};
 
@@ -25,26 +23,18 @@ impl SqDurationTrait for SqDuration {
     }
 
     fn s(&self) -> anyhow::Result<SqInt> {
-        let secs_u64 = self.value.as_secs();
-        let Ok(secs_i64) = i64::try_from(secs_u64) else {
-            return Err(anyhow!(
-                "Failed to convert duration in seconds ({}s) to a 64-bit signed integer",
-                secs_u64
-            ));
-        };
-
-        Ok(SqInt::new(secs_i64))
+        Ok(SqInt::from(self.value.as_secs()))
     }
 
     fn subsec_ns(&self) -> anyhow::Result<SqInt> {
-        Ok(SqInt::new(i64::from(self.value.subsec_nanos())))
+        Ok(SqInt::from(self.value.subsec_nanos()))
     }
 
     fn subsec_us(&self) -> anyhow::Result<SqInt> {
-        Ok(SqInt::new(i64::from(self.value.subsec_micros())))
+        Ok(SqInt::from(self.value.subsec_micros()))
     }
 
     fn subsec_ms(&self) -> anyhow::Result<SqInt> {
-        Ok(SqInt::new(i64::from(self.value.subsec_millis())))
+        Ok(SqInt::from(self.value.subsec_millis()))
     }
 }
