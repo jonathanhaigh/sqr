@@ -32,14 +32,14 @@ macro_rules! return_none_or_err {
 }
 pub(crate) use return_none_or_err;
 
-/// A trait to be implemented by types for which a `&T` can sometimes be obtained.
-///
-/// Unlike `std::convert::AsRef::as_ref()`, `TryAsRef::try_as_ref()` can fail.
+pub trait TryAs<T> {
+    type Error;
+    fn try_as(&self) -> StdResult<T, Self::Error>;
+}
+
 pub trait TryAsRef<T: ?Sized> {
-    /// Try to borrow self as a`&T`.
-    ///
-    /// If the conversion fails, `None` is returned.
-    fn try_as_ref(&self) -> Option<&T>;
+    type Error;
+    fn try_as_ref(&self) -> StdResult<&T, Self::Error>;
 }
 
 #[derive(Clone, Debug, Eq, PartialEq, ThisError)]

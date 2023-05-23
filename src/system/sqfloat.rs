@@ -17,6 +17,6 @@ impl SqFloat {
 
 impl SqFloatTrait for SqFloat {
     fn to_primitive(&self) -> anyhow::Result<Primitive> {
-        Ok(Primitive::Float(self.value))
+        Ok(Primitive::F64(self.value))
     }
 }

@@ -206,23 +206,23 @@ mod tests {
         let mut seq = gen_sqbvalue_seq(seq_type, 5);
         assert_eq!(
             field_call_result_to_primitive(seq.next().unwrap()),
-            Primitive::Int(0)
+            Primitive::I128(0)
         );
         assert_eq!(
             field_call_result_to_primitive(seq.next().unwrap()),
-            Primitive::Int(1)
+            Primitive::I128(1)
         );
         assert_eq!(
             field_call_result_to_primitive(seq.next().unwrap()),
-            Primitive::Int(2)
+            Primitive::I128(2)
         );
         assert_eq!(
             field_call_result_to_primitive(seq.next().unwrap()),
-            Primitive::Int(3)
+            Primitive::I128(3)
         );
         assert_eq!(
             field_call_result_to_primitive(seq.next().unwrap()),
-            Primitive::Int(4)
+            Primitive::I128(4)
         );
         assert!(seq.next().is_none());
     }

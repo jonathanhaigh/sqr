@@ -4,7 +4,7 @@
         {
             "name": "SqBool",
             "doc": "A boolean type",
-            "primitive_coercion": "PrimitiveBool",
+            "primitive_coercion": "Bool",
             "fields": [
                 {
                     "name": "not",
@@ -17,26 +17,26 @@
         },
         {
             "name": "SqInt",
-            "doc": "A 64-bit signed integer",
-            "primitive_coercion": "PrimitiveInt",
+            "doc": "A 128-bit signed integer",
+            "primitive_coercion": "I128",
             "fields": []
         },
         {
             "name": "SqFloat",
             "doc": "A double precision floating point type",
-            "primitive_coercion": "PrimitiveFloat",
+            "primitive_coercion": "F64",
             "fields": []
         },
         {
             "name": "SqString",
             "doc": "A string of unicode characters",
-            "primitive_coercion": "PrimitiveString",
+            "primitive_coercion": "Str",
             "fields": []
         },
         {
             "name": "SqSystemTime",
             "doc": "A point in time",
-            "primitive_coercion": "PrimitiveInt",
+            "primitive_coercion": "U64",
             "fields": [
                 {
                     "name": "duration_since_epoch",
@@ -50,7 +50,7 @@
         {
             "name": "SqDuration",
             "doc": "A duration of time",
-            "primitive_coercion": "PrimitiveFloat",
+            "primitive_coercion": "F64",
             "fields": [
                 {
                     "name": "s",
@@ -85,7 +85,7 @@
         {
             "name": "SqDataSize",
             "doc": "A data size",
-            "primitive_coercion": "PrimitiveInt",
+            "primitive_coercion": "U64",
             "fields": [
                 {
                     "name": "B",
@@ -169,7 +169,7 @@
         {
             "name": "SqOsString",
             "doc": "A string in the OS's encoding",
-            "primitive_coercion": "PrimitiveString",
+            "primitive_coercion": "Str",
             "fields": [
                 {
                     "name": "string",
@@ -181,7 +181,7 @@
                             "index": 0,
                             "name": "replace_invalid",
                             "doc": "Replace invalid unicode bytes with � instead of failing.",
-                            "type": "PrimitiveBool",
+                            "type": "Bool",
                             "required": false,
                             "default_value": false
                         }
@@ -192,7 +192,7 @@
         {
             "name": "SqPath",
             "doc": "A filesystem path",
-            "primitive_coercion": "PrimitiveString",
+            "primitive_coercion": "Str",
             "fields": [
                 {
                     "name": "string",
@@ -204,7 +204,7 @@
                             "index": 0,
                             "name": "replace_invalid",
                             "doc": "Replace invalid unicode bytes with � instead of failing.",
-                            "type": "PrimitiveBool",
+                            "type": "Bool",
                             "required": false,
                             "default_value": false
                         }
@@ -311,7 +311,7 @@
                             "index": 0,
                             "name": "recurse",
                             "doc": "Whether recursively list children of subdirectories",
-                            "type": "PrimitiveBool",
+                            "type": "Bool",
                             "required": false,
                             "default_value": false
                         },
@@ -319,7 +319,7 @@
                             "index": 1,
                             "name": "follow_symlinks",
                             "doc": "Whether to dereference symlinks",
-                            "type": "PrimitiveBool",
+                            "type": "Bool",
                             "required": false,
                             "default_value": true
                         },
@@ -327,7 +327,7 @@
                             "index": 2,
                             "name": "skip_permission_denied",
                             "doc": "Whether to skip subdirectories that would otherwise cause permission errors",
-                            "type": "PrimitiveBool",
+                            "type": "Bool",
                             "required": false,
                             "default_value": false
                         },
@@ -335,7 +335,7 @@
                             "index": 3,
                             "name": "same_filesystem",
                             "doc": "Do not cross filesystem boundaries",
-                            "type": "PrimitiveBool",
+                            "type": "Bool",
                             "required": false,
                             "default_value": false
                         }
@@ -400,7 +400,7 @@
                             "index": 0,
                             "name": "follow_symlinks",
                             "doc": "Whether to dereference symlinks",
-                            "type": "PrimitiveBool",
+                            "type": "Bool",
                             "required": false,
                             "default_value": true
                         }
@@ -411,7 +411,7 @@
         {
             "name": "SqFile",
             "doc": "A file",
-            "primitive_coercion": "PrimitiveString",
+            "primitive_coercion": "Str",
             "fields": [
                 {
                     "name": "inode",
@@ -496,7 +496,7 @@
         {
             "name": "SqFileMode",
             "doc": "File mode information. I.e. permissions and SUID, SGID and sticky bits",
-            "primitive_coercion": "PrimitiveInt",
+            "primitive_coercion": "U32",
             "fields": [
                 {
                     "name": "permissions",
@@ -531,7 +531,7 @@
         {
             "name": "SqUser",
             "doc": "A user",
-            "primitive_coercion": "PrimitiveInt",
+            "primitive_coercion": "U32",
             "fields": [
                 {
                     "name": "uid",
@@ -592,7 +592,7 @@
         {
             "name": "SqGroup",
             "doc": "A group",
-            "primitive_coercion": "PrimitiveInt",
+            "primitive_coercion": "U32",
             "fields": [
                 {
                     "name": "gid",
@@ -624,7 +624,7 @@
                 "The SQ root type is the entry point into the system:",
                 "all SQ Queries begin by selecting fields from the SQ root type."
             ],
-            "primitive_coercion": "PrimitiveBool",
+            "primitive_coercion": "Bool",
             "fields": [
                 {
                     "name": "bool",
@@ -636,7 +636,7 @@
                             "index": 0,
                             "name": "value",
                             "doc": "the value of the boolean to get",
-                            "type": "PrimitiveBool",
+                            "type": "Bool",
                             "required": false,
                             "default_value": false
                         }
@@ -652,7 +652,7 @@
                             "index": 0,
                             "name": "value",
                             "doc": "the path to get; default is the current working directory",
-                            "type": "PrimitiveString",
+                            "type": "Str",
                             "required": false,
                             "default_value": null
                         }
@@ -668,7 +668,7 @@
                             "index": 0,
                             "name": "value",
                             "doc": "the value of the integer to get",
-                            "type": "PrimitiveInt",
+                            "type": "I128",
                             "required": false,
                             "default_value": 0
                         }
@@ -696,7 +696,7 @@
                             "index": 0,
                             "name": "start",
                             "doc": "the first integer in the squence",
-                            "type": "PrimitiveInt",
+                            "type": "I128",
                             "required": false,
                             "default_value": 0
                         },
@@ -704,7 +704,7 @@
                             "index": 1,
                             "name": "stop",
                             "doc": "the upper bound for the sequence; default is no upper bound",
-                            "type": "PrimitiveInt",
+                            "type": "I128",
                             "required": false,
                             "default_value": null
                         },
@@ -712,7 +712,7 @@
                             "index": 2,
                             "name": "step",
                             "doc": "distance between each integer returned; must be > 0",
-                            "type": "PrimitiveInt",
+                            "type": "I128",
                             "required": false,
                             "default_value": 1
                         }
@@ -728,7 +728,7 @@
                             "index": 0,
                             "name": "value",
                             "doc": "the value, in bytes, of the data size to get",
-                            "type": "PrimitiveInt",
+                            "type": "U64",
                             "required": false,
                             "default_value": 0
                         }
@@ -744,7 +744,7 @@
                             "index": 0,
                             "name": "value",
                             "doc": "the value of the float to get",
-                            "type": "PrimitiveFloat",
+                            "type": "F64",
                             "required": false,
                             "default_value": 0.0
                         }
@@ -760,7 +760,7 @@
                             "index": 0,
                             "name": "s",
                             "doc": "Seconds to add to the duration",
-                            "type": "PrimitiveInt",
+                            "type": "U64",
                             "required": false,
                             "default_value": 0
                         },
@@ -768,7 +768,7 @@
                             "index": 1,
                             "name": "ms",
                             "doc": "Milliseconds to add to the duration",
-                            "type": "PrimitiveInt",
+                            "type": "U64",
                             "required": false,
                             "default_value": 0
                         },
@@ -776,7 +776,7 @@
                             "index": 2,
                             "name": "us",
                             "doc": "Microseconds to add to the duration",
-                            "type": "PrimitiveInt",
+                            "type": "U64",
                             "required": false,
                             "default_value": 0
                         },
@@ -784,7 +784,7 @@
                             "index": 3,
                             "name": "ns",
                             "doc": "Nanoseconds to add to the duration",
-                            "type": "PrimitiveInt",
+                            "type": "U64",
                             "required": false,
                             "default_value": 0
                         }
@@ -800,7 +800,7 @@
                             "index": 0,
                             "name": "value",
                             "doc": "the value of the string to get",
-                            "type": "PrimitiveString",
+                            "type": "Str",
                             "required": false,
                             "default_value": ""
                         }
@@ -820,7 +820,7 @@
                             "index": 0,
                             "name": "username",
                             "doc": "The username of the user to get",
-                            "type": "PrimitiveString",
+                            "type": "Str",
                             "required": false,
                             "default_value": null
                         },
@@ -828,7 +828,7 @@
                             "index": 1,
                             "name": "uid",
                             "doc": "the UID of the user to get",
-                            "type": "PrimitiveInt",
+                            "type": "U32",
                             "required": false,
                             "default_value": null
                         }
@@ -848,7 +848,7 @@
                             "index": 0,
                             "name": "group_name",
                             "doc": "The name of the group to get",
-                            "type": "PrimitiveString",
+                            "type": "Str",
                             "required": false,
                             "default_value": null
                         },
@@ -856,7 +856,7 @@
                             "index": 1,
                             "name": "gid",
                             "doc": "the GID of the group to get",
-                            "type": "PrimitiveInt",
+                            "type": "U32",
                             "required": false,
                             "default_value": null
                         }

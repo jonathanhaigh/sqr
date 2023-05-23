@@ -6,17 +6,22 @@
 
 use std::cmp;
 use std::fmt;
+use std::result::Result as StdResult;
 
 use serde::Serialize;
 use thiserror::Error as ThisError;
 
-use crate::util::TryAsRef;
+use crate::util::{TryAs, TryAsRef};
 
 /// The kind of a primitive value.
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub enum PrimitiveKind {
-    Int,
-    Float,
+    I128,
+    I64,
+    I32,
+    U64,
+    U32,
+    F64,
     Str,
     Bool,
 }
@@ -25,10 +30,14 @@ impl PrimitiveKind {
     /// Get the name of the kind of primitive value.
     pub fn name(&self) -> &'static str {
         match self {
-            Self::Int => "PrimitiveInt",
-            Self::Float => "PrimitiveFloat",
-            Self::Str => "PrimitiveStr",
-            Self::Bool => "PrimitiveBool",
+            Self::I128 => "i128",
+            Self::I64 => "i64",
+            Self::I32 => "i32",
+            Self::U64 => "u64",
+            Self::U32 => "u32",
+            Self::F64 => "f64",
+            Self::Str => "str",
+            Self::Bool => "bool",
         }
     }
 }
@@ -46,10 +55,43 @@ impl fmt::Display for PrimitiveKind {
 #[derive(Clone, Debug, PartialEq, Serialize)]
 #[serde(untagged)]
 pub enum Primitive {
-    Int(i128),
-    Float(f64),
+    I128(i128),
+    I64(i64),
+    I32(i32),
+    U64(u64),
+    U32(u32),
+    F64(f64),
     Str(String),
     Bool(bool),
+}
+
+/// Error returned when a Primitive::try_as_* method fails.
+#[derive(Debug, ThisError)]
+pub enum PrimitiveTryAsError {
+    #[error("Cannot convert primitive of type {kind} to {target}")]
+    TypeMismatch { kind: PrimitiveKind, target: String },
+
+    #[error("Integer value {value} does not fit in type {target}")]
+    IntConversion { value: i128, target: String },
+}
+
+impl PrimitiveTryAsError {
+    pub fn type_mismatch(value: &Primitive, target: &str) -> Self {
+        Self::TypeMismatch {
+            kind: value.kind(),
+            target: target.to_owned(),
+        }
+    }
+
+    pub fn int_conversion<T>(value: T, target: &str) -> Self
+    where
+        i128: From<T>,
+    {
+        Self::IntConversion {
+            value: i128::from(value),
+            target: target.to_owned(),
+        }
+    }
 }
 
 impl Primitive {
@@ -61,10 +103,140 @@ impl Primitive {
     /// Get the kind of the SQ primitive value.
     pub fn kind(&self) -> PrimitiveKind {
         match self {
-            Self::Int(_) => PrimitiveKind::Int,
-            Self::Float(_) => PrimitiveKind::Float,
+            Self::I128(_) => PrimitiveKind::I128,
+            Self::I64(_) => PrimitiveKind::I64,
+            Self::I32(_) => PrimitiveKind::I32,
+            Self::U64(_) => PrimitiveKind::U64,
+            Self::U32(_) => PrimitiveKind::U32,
+            Self::F64(_) => PrimitiveKind::F64,
             Self::Str(_) => PrimitiveKind::Str,
             Self::Bool(_) => PrimitiveKind::Bool,
+        }
+    }
+}
+
+impl TryAs<i128> for Primitive {
+    type Error = PrimitiveTryAsError;
+    fn try_as(&self) -> StdResult<i128, Self::Error> {
+        match self {
+            Self::I128(v) => Ok(*v),
+            Self::I64(v) => Ok(i128::from(*v)),
+            Self::I32(v) => Ok(i128::from(*v)),
+            Self::U64(v) => Ok(i128::from(*v)),
+            Self::U32(v) => Ok(i128::from(*v)),
+            _ => Err(PrimitiveTryAsError::type_mismatch(self, "i128")),
+        }
+    }
+}
+
+impl TryAs<i64> for Primitive {
+    type Error = PrimitiveTryAsError;
+    fn try_as(&self) -> StdResult<i64, Self::Error> {
+        match self {
+            Self::I128(v) => {
+                i64::try_from(*v).map_err(|_| PrimitiveTryAsError::int_conversion(*v, "i64"))
+            }
+            Self::I64(v) => Ok(*v),
+            Self::U64(v) => {
+                i64::try_from(*v).map_err(|_| PrimitiveTryAsError::int_conversion(*v, "i64"))
+            }
+            Self::I32(v) => Ok(i64::from(*v)),
+            Self::U32(v) => Ok(i64::from(*v)),
+            _ => Err(PrimitiveTryAsError::type_mismatch(self, "i64")),
+        }
+    }
+}
+
+impl TryAs<i32> for Primitive {
+    type Error = PrimitiveTryAsError;
+    fn try_as(&self) -> StdResult<i32, Self::Error> {
+        match self {
+            Self::I128(v) => {
+                i32::try_from(*v).map_err(|_| PrimitiveTryAsError::int_conversion(*v, "i32"))
+            }
+            Self::I64(v) => {
+                i32::try_from(*v).map_err(|_| PrimitiveTryAsError::int_conversion(*v, "i32"))
+            }
+            Self::I32(v) => Ok(*v),
+            Self::U64(v) => {
+                i32::try_from(*v).map_err(|_| PrimitiveTryAsError::int_conversion(*v, "i32"))
+            }
+            Self::U32(v) => {
+                i32::try_from(*v).map_err(|_| PrimitiveTryAsError::int_conversion(*v, "i32"))
+            }
+            _ => Err(PrimitiveTryAsError::type_mismatch(self, "i32")),
+        }
+    }
+}
+
+impl TryAs<u64> for Primitive {
+    type Error = PrimitiveTryAsError;
+    fn try_as(&self) -> StdResult<u64, Self::Error> {
+        match self {
+            Self::I128(v) => {
+                u64::try_from(*v).map_err(|_| PrimitiveTryAsError::int_conversion(*v, "u64"))
+            }
+            Self::I64(v) => {
+                u64::try_from(*v).map_err(|_| PrimitiveTryAsError::int_conversion(*v, "u64"))
+            }
+            Self::I32(v) => {
+                u64::try_from(*v).map_err(|_| PrimitiveTryAsError::int_conversion(*v, "u64"))
+            }
+            Self::U64(v) => Ok(*v),
+            Self::U32(v) => Ok(u64::from(*v)),
+            _ => Err(PrimitiveTryAsError::type_mismatch(self, "u64")),
+        }
+    }
+}
+
+impl TryAs<u32> for Primitive {
+    type Error = PrimitiveTryAsError;
+    fn try_as(&self) -> StdResult<u32, Self::Error> {
+        match self {
+            Self::I128(v) => {
+                u32::try_from(*v).map_err(|_| PrimitiveTryAsError::int_conversion(*v, "u32"))
+            }
+            Self::I64(v) => {
+                u32::try_from(*v).map_err(|_| PrimitiveTryAsError::int_conversion(*v, "u32"))
+            }
+            Self::I32(v) => {
+                u32::try_from(*v).map_err(|_| PrimitiveTryAsError::int_conversion(*v, "u32"))
+            }
+            Self::U64(v) => {
+                u32::try_from(*v).map_err(|_| PrimitiveTryAsError::int_conversion(*v, "u32"))
+            }
+            Self::U32(v) => Ok(*v),
+            _ => Err(PrimitiveTryAsError::type_mismatch(self, "u32")),
+        }
+    }
+}
+
+impl TryAs<f64> for Primitive {
+    type Error = PrimitiveTryAsError;
+    fn try_as(&self) -> StdResult<f64, Self::Error> {
+        match self {
+            Self::F64(v) => Ok(*v),
+            _ => Err(PrimitiveTryAsError::type_mismatch(self, "f64")),
+        }
+    }
+}
+
+impl TryAs<bool> for Primitive {
+    type Error = PrimitiveTryAsError;
+    fn try_as(&self) -> StdResult<bool, Self::Error> {
+        match self {
+            Self::Bool(v) => Ok(*v),
+            _ => Err(PrimitiveTryAsError::type_mismatch(self, "bool")),
+        }
+    }
+}
+
+impl TryAsRef<str> for Primitive {
+    type Error = PrimitiveTryAsError;
+    fn try_as_ref(&self) -> StdResult<&str, Self::Error> {
+        match self {
+            Self::Str(v) => Ok(v),
+            _ => Err(PrimitiveTryAsError::type_mismatch(self, "str")),
         }
     }
 }
@@ -78,8 +250,12 @@ impl cmp::PartialOrd<Primitive> for Primitive {
     fn partial_cmp(&self, other: &Primitive) -> Option<cmp::Ordering> {
         use Primitive::*;
         match (self, other) {
-            (Int(lhs), Int(rhs)) => Some(lhs.cmp(rhs)),
-            (Float(lhs), Float(rhs)) => lhs.partial_cmp(rhs),
+            (I128(lhs), I128(rhs)) => Some(lhs.cmp(rhs)),
+            (I64(lhs), I64(rhs)) => Some(lhs.cmp(rhs)),
+            (I32(lhs), I32(rhs)) => Some(lhs.cmp(rhs)),
+            (U64(lhs), U64(rhs)) => Some(lhs.cmp(rhs)),
+            (U32(lhs), U32(rhs)) => Some(lhs.cmp(rhs)),
+            (F64(lhs), F64(rhs)) => lhs.partial_cmp(rhs),
             (Str(lhs), Str(rhs)) => Some(lhs.cmp(rhs)),
             (Bool(lhs), Bool(rhs)) => Some(lhs.cmp(rhs)),
             (_, _) => None,
@@ -89,43 +265,43 @@ impl cmp::PartialOrd<Primitive> for Primitive {
 
 impl From<i128> for Primitive {
     fn from(v: i128) -> Self {
-        Self::Int(v)
+        Self::I128(v)
     }
 }
 
 impl From<i64> for Primitive {
     fn from(v: i64) -> Self {
-        Self::Int(i128::from(v))
+        Self::I64(v)
     }
 }
 
 impl From<i32> for Primitive {
     fn from(v: i32) -> Self {
-        Self::Int(i128::from(v))
+        Self::I32(v)
     }
 }
 
 impl From<u64> for Primitive {
     fn from(v: u64) -> Self {
-        Self::Int(i128::from(v))
+        Self::U64(v)
     }
 }
 
 impl From<u32> for Primitive {
     fn from(v: u32) -> Self {
-        Self::Int(i128::from(v))
+        Self::U32(v)
     }
 }
 
 impl From<f64> for Primitive {
     fn from(v: f64) -> Self {
-        Self::Float(v)
+        Self::F64(v)
     }
 }
 
 impl From<f32> for Primitive {
     fn from(v: f32) -> Self {
-        Self::Float(f64::from(v))
+        Self::F64(f64::from(v))
     }
 }
 
@@ -135,113 +311,17 @@ impl From<String> for Primitive {
     }
 }
 
-/// Error returned by `T::try_from(primitive)` when the primitive is the wrong kind to be converted
-/// to `T`.
-#[derive(Debug, ThisError)]
-#[error("{reason}")]
-pub struct TryFromPrimitiveError {
-    reason: String,
-}
-
-impl TryFromPrimitiveError {
-    pub fn type_mismatch(value: &Primitive, target: &str) -> Self {
-        Self {
-            reason: format!(
-                "Cannot convert primitive of type {} to {}",
-                value.kind(),
-                target
-            ),
-        }
-    }
-
-    pub fn int_conversion(value: i128, target: &str) -> Self {
-        Self {
-            reason: format!("Integer value {} does not fit in type {}", value, target),
-        }
+impl From<&str> for Primitive {
+    fn from(v: &str) -> Self {
+        Self::Str(v.to_owned())
     }
 }
 
-impl TryFrom<Primitive> for i128 {
-    type Error = TryFromPrimitiveError;
-    fn try_from(value: Primitive) -> std::result::Result<Self, Self::Error> {
-        match value {
-            Primitive::Int(v) => Ok(v),
-            _ => Err(TryFromPrimitiveError::type_mismatch(&value, "i128")),
-        }
+impl From<bool> for Primitive {
+    fn from(v: bool) -> Self {
+        Self::Bool(v)
     }
 }
-
-impl TryFrom<Primitive> for i64 {
-    type Error = TryFromPrimitiveError;
-    fn try_from(value: Primitive) -> std::result::Result<Self, Self::Error> {
-        match value {
-            Primitive::Int(v) => Ok(
-                i64::try_from(v).map_err(|_| TryFromPrimitiveError::int_conversion(v, "i64"))?
-            ),
-            _ => Err(TryFromPrimitiveError::type_mismatch(&value, "i64")),
-        }
-    }
-}
-
-impl TryFrom<Primitive> for f64 {
-    type Error = TryFromPrimitiveError;
-    fn try_from(value: Primitive) -> std::result::Result<Self, Self::Error> {
-        match value {
-            Primitive::Float(v) => Ok(v),
-            _ => Err(TryFromPrimitiveError::type_mismatch(&value, "f64")),
-        }
-    }
-}
-
-impl TryFrom<Primitive> for String {
-    type Error = TryFromPrimitiveError;
-    fn try_from(value: Primitive) -> std::result::Result<Self, Self::Error> {
-        match value {
-            Primitive::Str(v) => Ok(v),
-            _ => Err(TryFromPrimitiveError::type_mismatch(&value, "String")),
-        }
-    }
-}
-
-impl TryFrom<Primitive> for bool {
-    type Error = TryFromPrimitiveError;
-    fn try_from(value: Primitive) -> std::result::Result<Self, Self::Error> {
-        match value {
-            Primitive::Bool(v) => Ok(v),
-            _ => Err(TryFromPrimitiveError::type_mismatch(&value, "Bool")),
-        }
-    }
-}
-
-/// Generate an implementation of `util::TryAsRef` for a primitive type.
-///
-/// # Parameters
-/// - `$t`: the underlying rust data type that `TryAsRef::try_as_ref` should return a reference to.
-/// - `$variant`: the variant of `Primitive` from which a reference of type `$t` can be obtained.
-macro_rules! generate_try_as_ref_for_primitive {
-    ($t:ty, $variant:ident) => {
-        impl TryAsRef<$t> for Primitive {
-            #[doc = concat!(
-                                "Try to get a `&",
-                                stringify!($t),
-                                "`  from a `Primitive::",
-                                stringify!($variant),
-                                "`.\n\nReturns `None` if the `Primitive` holds a different variant."
-                            )]
-            fn try_as_ref(&self) -> Option<&$t> {
-                match self {
-                    Self::$variant(v) => Some(v),
-                    _ => None,
-                }
-            }
-        }
-    };
-}
-
-generate_try_as_ref_for_primitive!(i128, Int);
-generate_try_as_ref_for_primitive!(f64, Float);
-generate_try_as_ref_for_primitive!(str, Str);
-generate_try_as_ref_for_primitive!(bool, Bool);
 
 #[cfg(test)]
 mod tests {
@@ -256,8 +336,12 @@ mod tests {
     use Primitive::*;
 
     #[rstest]
-    #[case::int[PrimitiveKind::Int, "(?i:int)"]]
-    #[case::float[PrimitiveKind::Float, "(?i:float)"]]
+    #[case::i128[PrimitiveKind::I128, "(?i:i128)"]]
+    #[case::i64[PrimitiveKind::I64, "(?i:i64)"]]
+    #[case::i32[PrimitiveKind::I32, "(?i:i32)"]]
+    #[case::u64[PrimitiveKind::U64, "(?i:u64)"]]
+    #[case::u32[PrimitiveKind::U32, "(?i:u32)"]]
+    #[case::f64[PrimitiveKind::F64, "(?i:f64)"]]
     #[case::str[PrimitiveKind::Str, "(?i:str)"]]
     #[case::bool[PrimitiveKind::Bool, "(?i:bool)"]]
     fn test_primitive_kind_name(#[case] kind: PrimitiveKind, #[case] regex_str: &'static str) {
@@ -266,8 +350,12 @@ mod tests {
     }
 
     #[rstest]
-    #[case::int[PrimitiveKind::Int, "(?i:int)"]]
-    #[case::float[PrimitiveKind::Float, "(?i:float)"]]
+    #[case::i128[PrimitiveKind::I128, "(?i:i128)"]]
+    #[case::i64[PrimitiveKind::I64, "(?i:i64)"]]
+    #[case::i32[PrimitiveKind::I32, "(?i:i32)"]]
+    #[case::u64[PrimitiveKind::U64, "(?i:u64)"]]
+    #[case::u32[PrimitiveKind::U32, "(?i:u32)"]]
+    #[case::f64[PrimitiveKind::F64, "(?i:f64)"]]
     #[case::str[PrimitiveKind::Str, "(?i:str)"]]
     #[case::bool[PrimitiveKind::Bool, "(?i:bool)"]]
     fn test_primitive_kind_display(#[case] kind: PrimitiveKind, #[case] regex_str: &'static str) {
@@ -276,8 +364,12 @@ mod tests {
     }
 
     #[rstest]
-    #[case::int[PrimitiveKind::Int, "(?i:int)"]]
-    #[case::float[PrimitiveKind::Float, "(?i:float)"]]
+    #[case::i128[PrimitiveKind::I128, "(?i:i128)"]]
+    #[case::i64[PrimitiveKind::I64, "(?i:i64)"]]
+    #[case::i32[PrimitiveKind::I32, "(?i:i32)"]]
+    #[case::u64[PrimitiveKind::U64, "(?i:u64)"]]
+    #[case::u32[PrimitiveKind::U32, "(?i:u32)"]]
+    #[case::f64[PrimitiveKind::F64, "(?i:f64)"]]
     #[case::str[PrimitiveKind::Str, "(?i:str)"]]
     #[case::bool[PrimitiveKind::Bool, "(?i:bool)"]]
     fn test_primitive_kind_debug(#[case] kind: PrimitiveKind, #[case] regex_str: &'static str) {
@@ -286,8 +378,12 @@ mod tests {
     }
 
     #[rstest]
-    #[case::int(Int(10), PrimitiveKind::Int)]
-    #[case::float(Float(100.0), PrimitiveKind::Float)]
+    #[case::i128(I128(10), PrimitiveKind::I128)]
+    #[case::i64(I64(10), PrimitiveKind::I64)]
+    #[case::i32(I32(10), PrimitiveKind::I32)]
+    #[case::u64(U64(10), PrimitiveKind::U64)]
+    #[case::u32(U32(10), PrimitiveKind::U32)]
+    #[case::f64(F64(100.0), PrimitiveKind::F64)]
     #[case::str(Str("abc".to_owned()), PrimitiveKind::Str)]
     #[case::bool(Bool(true), PrimitiveKind::Bool)]
     fn test_primitive_dot_kind(#[case] prim: Primitive, #[case] kind: PrimitiveKind) {
@@ -295,8 +391,12 @@ mod tests {
     }
 
     #[rstest]
-    #[case::int(Int(10), PrimitiveKind::Int)]
-    #[case::float(Float(100.0), PrimitiveKind::Float)]
+    #[case::i128(I128(10), PrimitiveKind::I128)]
+    #[case::i64(I64(10), PrimitiveKind::I64)]
+    #[case::i32(I32(10), PrimitiveKind::I32)]
+    #[case::u64(U64(10), PrimitiveKind::U64)]
+    #[case::u32(U32(10), PrimitiveKind::U32)]
+    #[case::f64(F64(100.0), PrimitiveKind::F64)]
     #[case::str(Str("abc".to_owned()), PrimitiveKind::Str)]
     #[case::bool(Bool(true), PrimitiveKind::Bool)]
     fn test_primitive_dot_kind_name(#[case] prim: Primitive, #[case] kind: PrimitiveKind) {
@@ -304,20 +404,24 @@ mod tests {
     }
 
     #[rstest]
-    #[case::int_10_10(Int(10), Int(10), true)]
-    #[case::int_10_9(Int(10), Int(9), false)]
-    #[case::int_10_str_x(Int(10), Str("x".to_owned()), false)]
-    #[case::int_10_float_9p1(Int(10), Float(9.1), false)]
-    #[case::int_1_bool_true(Int(1), Bool(true), false)]
+    #[case::i128_10_10(I128(10), I128(10), true)]
+    #[case::i128_10_9(I128(10), I128(9), false)]
+    #[case::i128_10_i64_10(I128(10), I64(10), false)]
+    #[case::i128_10_i32_10(I128(10), I32(10), false)]
+    #[case::i128_10_u64_10(I128(10), U64(10), false)]
+    #[case::i128_10_u32_10(I128(10), U32(10), false)]
+    #[case::i128_10_str_x(I128(10), Str("x".to_owned()), false)]
+    #[case::i128_10_f64_9p1(I128(10), F64(9.1), false)]
+    #[case::i128_1_bool_true(I128(1), Bool(true), false)]
     #[case::str_x_x(Str("x".to_owned()), Str("x".to_owned()), true)]
     #[case::str_x_y(Str("x".to_owned()), Str("y".to_owned()), false)]
-    #[case::str_x_float_9p1(Str("x".to_owned()), Float(9.1), false)]
+    #[case::str_x_f64_9p1(Str("x".to_owned()), F64(9.1), false)]
     #[case::str_x_bool_true(Str("x".to_owned()), Bool(true), false)]
-    #[case::float_9p1_9p1(Float(9.1), Float(9.1), true)]
-    #[case::float_9p1_8p2(Float(9.1), Float(8.2), false)]
-    #[case::float_nan_9p1(Float(f64::NAN), Float(9.1), false)]
-    #[case::float_nan_nan(Float(f64::NAN), Float(f64::NAN), false)]
-    #[case::float_bool_true(Float(9.1), Bool(true), false)]
+    #[case::f64_9p1_9p1(F64(9.1), F64(9.1), true)]
+    #[case::f64_9p1_8p2(F64(9.1), F64(8.2), false)]
+    #[case::f64_nan_9p1(F64(f64::NAN), F64(9.1), false)]
+    #[case::f64_nan_nan(F64(f64::NAN), F64(f64::NAN), false)]
+    #[case::f64_bool_true(F64(9.1), Bool(true), false)]
     #[case::bool_true_true(Bool(true), Bool(true), true)]
     #[case::bool_false_false(Bool(false), Bool(false), true)]
     #[case::bool_true_false(Bool(true), Bool(false), false)]
@@ -326,23 +430,27 @@ mod tests {
     }
 
     #[rstest]
-    #[case::int_10_10(Int(10), Int(10), Some(Equal))]
-    #[case::int_10_9(Int(10), Int(9), Some(Greater))]
-    #[case::int_10_20(Int(10), Int(20), Some(Less))]
-    #[case::int_10_str_x(Int(10), Str("x".to_owned()), None)]
-    #[case::int_10_float_9p1(Int(10), Float(9.1), None)]
-    #[case::int_1_bool_true(Int(1), Bool(true), None)]
+    #[case::i128_10_10(I128(10), I128(10), Some(Equal))]
+    #[case::i128_10_9(I128(10), I128(9), Some(Greater))]
+    #[case::i128_10_20(I128(10), I128(20), Some(Less))]
+    #[case::i128_10_i64_10(I128(10), I64(10), None)]
+    #[case::i128_10_i32_10(I128(10), I32(10), None)]
+    #[case::i128_10_u64_10(I128(10), U64(10), None)]
+    #[case::i128_10_u32_10(I128(10), U32(10), None)]
+    #[case::i128_10_str_x(I128(10), Str("x".to_owned()), None)]
+    #[case::i128_10_f64_9p1(I128(10), F64(9.1), None)]
+    #[case::i128_1_bool_true(I128(1), Bool(true), None)]
     #[case::str_x_x(Str("x".to_owned()), Str("x".to_owned()), Some(Equal))]
     #[case::str_x_y(Str("b".to_owned()), Str("a".to_owned()), Some(Greater))]
     #[case::str_x_y(Str("a".to_owned()), Str("b".to_owned()), Some(Less))]
-    #[case::str_x_float_9p1(Str("x".to_owned()), Float(9.1), None)]
+    #[case::str_x_f64_9p1(Str("x".to_owned()), F64(9.1), None)]
     #[case::str_x_bool_true(Str("x".to_owned()), Bool(true), None)]
-    #[case::float_9p1_9p1(Float(9.1), Float(9.1), Some(Equal))]
-    #[case::float_9p1_8p2(Float(9.1), Float(8.2), Some(Greater))]
-    #[case::float_9p1_8p2(Float(9.1), Float(100.0), Some(Less))]
-    #[case::float_nan_9p1(Float(f64::NAN), Float(9.1), None)]
-    #[case::float_nan_nan(Float(f64::NAN), Float(f64::NAN), None)]
-    #[case::float_bool_true(Float(9.1), Bool(true), None)]
+    #[case::f64_9p1_9p1(F64(9.1), F64(9.1), Some(Equal))]
+    #[case::f64_9p1_8p2(F64(9.1), F64(8.2), Some(Greater))]
+    #[case::f64_9p1_8p2(F64(9.1), F64(100.0), Some(Less))]
+    #[case::f64_nan_9p1(F64(f64::NAN), F64(9.1), None)]
+    #[case::f64_nan_nan(F64(f64::NAN), F64(f64::NAN), None)]
+    #[case::f64_bool_true(F64(9.1), Bool(true), None)]
     #[case::bool_true_true(Bool(true), Bool(true), Some(Equal))]
     #[case::bool_false_false(Bool(false), Bool(false), Some(Equal))]
     #[case::bool_true_false(Bool(true), Bool(false), Some(Greater))]
@@ -356,61 +464,115 @@ mod tests {
     }
 
     #[rstest]
-    #[case::int_i128(Int(i128::MAX), Some(i128::MAX))]
-    #[case::int_i64_max(Int(9_223_372_036_854_775_807i128), Some(i64::MAX))]
-    #[case::int_i64_min(Int(-9_223_372_036_854_775_808i128), Some(i64::MIN))]
-    #[case::int_i64_too_big(Int(i128::MAX), Option::<i64>::None)]
-    #[case::int_i64_too_small(Int(i128::MIN), Option::<i64>::None)]
-    #[case::int_f64(Int(10), Option::<f64>::None)]
-    #[case::int_str(Int(10), Option::<String>::None)]
-    #[case::int_bool(Int(10), Option::<bool>::None)]
-    #[case::float_i128(Float(10.1), Option::<i128>::None)]
-    #[case::float_f64(Float(10.1), Some(10.1f64))]
-    #[case::float_str(Float(10.1), Option::<String>::None)]
-    #[case::float_bool(Float(10.1), Option::<bool>::None)]
-    #[case::str_i128(Str("x".to_owned()), Option::<i128>::None)]
-    #[case::str_f64(Str("x".to_owned()), Option::<f64>::None)]
-    #[case::str_str(Str("x".to_owned()), Some("x".to_owned()))]
-    #[case::str_bool(Str("x".to_owned()), Option::<bool>::None)]
-    #[case::bool_i128(Bool(true), Option::<i128>::None)]
-    #[case::bool_f64(Bool(true), Option::<f64>::None)]
-    #[case::bool_str(Bool(true), Option::<String>::None)]
-    #[case::bool_true(Bool(true), Some(true))]
-    #[case::bool_false(Bool(false), Some(false))]
-    fn test_try_from_primitive<T>(#[case] prim: Primitive, #[case] expected: Option<T>)
-    where
-        T: std::convert::TryFrom<Primitive> + std::cmp::PartialEq + std::fmt::Debug,
-        <T as TryFrom<Primitive>>::Error: std::fmt::Debug,
-    {
+    #[case::i128_max(Primitive::from(i128::MAX), Some(i128::MAX))]
+    #[case::i128_min(Primitive::from(i128::MIN), Some(i128::MIN))]
+    #[case::i64_max(Primitive::from(i64::MAX), Some(i128::from(i64::MAX)))]
+    #[case::i32_max(Primitive::from(i32::MAX), Some(i128::from(i32::MAX)))]
+    #[case::u64_max(Primitive::from(u64::MAX), Some(i128::from(u64::MAX)))]
+    #[case::u32_max(Primitive::from(u32::MAX), Some(i128::from(u32::MAX)))]
+    #[case::f64(Primitive::from(99.0), None)]
+    #[case::str(Primitive::from("abc"), None)]
+    #[case::bool(Primitive::from(true), None)]
+    fn test_primitive_try_as_i128(#[case] prim: Primitive, #[case] expected: Option<i128>) {
+        let ret: StdResult<i128, _> = prim.try_as();
         match expected {
-            Some(v) => assert_eq!(T::try_from(prim).unwrap(), v),
-            None => assert!(T::try_from(prim).is_err()),
+            Some(v) => assert_eq!(ret.unwrap(), v),
+            None => assert!(ret.is_err()),
         }
     }
 
     #[rstest]
-    #[case::int_i128(Int(10), Some(&10i128))]
-    #[case::int_f64(Int(10), Option::<&f64>::None)]
-    #[case::int_str(Int(10), Option::<&str>::None)]
-    #[case::int_bool(Int(10), Option::<&bool>::None)]
-    #[case::float_i128(Float(10.1), Option::<&i128>::None)]
-    #[case::float_f64(Float(10.1), Some(&10.1f64))]
-    #[case::float_str(Float(10.1), Option::<&str>::None)]
-    #[case::float_bool(Float(10.1), Option::<&bool>::None)]
-    #[case::str_i128(Str("x".to_owned()), Option::<&i128>::None)]
-    #[case::str_f64(Str("x".to_owned()), Option::<&f64>::None)]
-    #[case::str_str(Str("x".to_owned()), Some("x"))]
-    #[case::str_bool(Str("x".to_owned()), Option::<&bool>::None)]
-    #[case::bool_i128(Bool(true), Option::<&i128>::None)]
-    #[case::bool_f64(Bool(true), Option::<&f64>::None)]
-    #[case::bool_str(Bool(true), Option::<&str>::None)]
-    #[case::bool_true(Bool(true), Some(&true))]
-    #[case::bool_false(Bool(false), Some(&false))]
-    fn test_try_as_ref_from_primitive<T>(#[case] prim: Primitive, #[case] expected: Option<&T>)
-    where
-        Primitive: crate::util::TryAsRef<T>,
-        T: ?Sized + std::cmp::PartialEq + std::fmt::Debug,
-    {
-        assert_eq!(prim.try_as_ref(), expected);
+    #[case::i128_max(Primitive::from(i128::MAX), None)]
+    #[case::i128_min(Primitive::from(i128::MIN), None)]
+    #[case::i64_max(Primitive::from(i64::MAX), Some(i64::MAX))]
+    #[case::i64_min(Primitive::from(i64::MIN), Some(i64::MIN))]
+    #[case::i32_max(Primitive::from(i32::MAX), Some(i64::from(i32::MAX)))]
+    #[case::u64_max(Primitive::from(u64::MAX), None)]
+    #[case::u32_max(Primitive::from(u32::MAX), Some(i64::from(u32::MAX)))]
+    #[case::f64(Primitive::from(99.0), None)]
+    #[case::str(Primitive::from("abc"), None)]
+    #[case::bool(Primitive::from(true), None)]
+    fn test_primitive_try_as_i64(#[case] prim: Primitive, #[case] expected: Option<i64>) {
+        let ret: StdResult<i64, _> = prim.try_as();
+        match expected {
+            Some(v) => assert_eq!(ret.unwrap(), v),
+            None => assert!(ret.is_err()),
+        }
+    }
+
+    #[rstest]
+    #[case::i128_max(Primitive::from(i128::MAX), None)]
+    #[case::i64_max(Primitive::from(i64::MAX), Some(9_223_372_036_854_775_807u64))]
+    #[case::i64_min(Primitive::from(i64::MIN), None)]
+    #[case::i32_max(Primitive::from(i32::MAX), Some(2_147_483_647u64))]
+    #[case::u32_max(Primitive::from(u32::MAX), Some(u64::from(u32::MAX)))]
+    #[case::u64_max(Primitive::from(u64::MAX), Some(u64::MAX))]
+    #[case::u64_min(Primitive::from(u64::MIN), Some(u64::MIN))]
+    #[case::f64(Primitive::from(99.0), None)]
+    #[case::str(Primitive::from("abc"), None)]
+    #[case::bool(Primitive::from(true), None)]
+    fn test_primitive_try_as_u64(#[case] prim: Primitive, #[case] expected: Option<u64>) {
+        let ret: StdResult<u64, _> = prim.try_as();
+        match expected {
+            Some(v) => assert_eq!(ret.unwrap(), v),
+            None => assert!(ret.is_err()),
+        }
+    }
+
+    #[rstest]
+    #[case::i128_max(Primitive::from(i128::MAX), None)]
+    #[case::u64_max(Primitive::from(u64::MAX), None)]
+    #[case::i32_max(Primitive::from(i32::MAX), Some(2_147_483_647u32))]
+    #[case::i32_min(Primitive::from(i32::MIN), None)]
+    #[case::u32_max(Primitive::from(u32::MAX), Some(u32::MAX))]
+    #[case::u32_min(Primitive::from(u32::MIN), Some(u32::MIN))]
+    #[case::f64(Primitive::from(99.0), None)]
+    #[case::str(Primitive::from("abc"), None)]
+    #[case::bool(Primitive::from(true), None)]
+    fn test_primitive_try_as_u32(#[case] prim: Primitive, #[case] expected: Option<u32>) {
+        let ret: StdResult<u32, _> = prim.try_as();
+        match expected {
+            Some(v) => assert_eq!(ret.unwrap(), v),
+            None => assert!(ret.is_err()),
+        }
+    }
+
+    #[rstest]
+    #[case::i128(Primitive::from(i128::MAX), None)]
+    #[case::f64(Primitive::from(99.0f64), Some(99.0f64))]
+    #[case::str(Primitive::from("abc"), None)]
+    #[case::bool(Primitive::from(true), None)]
+    fn test_primitive_try_as_f64(#[case] prim: Primitive, #[case] expected: Option<f64>) {
+        let ret: StdResult<f64, _> = prim.try_as();
+        match expected {
+            Some(v) => assert_eq!(ret.unwrap(), v),
+            None => assert!(ret.is_err()),
+        }
+    }
+
+    #[rstest]
+    #[case::i128(Primitive::from(i128::MAX), None)]
+    #[case::f64(Primitive::from(99.0f64), None)]
+    #[case::str(Primitive::from("abc"), None)]
+    #[case::bool(Primitive::from(true), Some(true))]
+    fn test_primitive_try_as_bool(#[case] prim: Primitive, #[case] expected: Option<bool>) {
+        let ret: StdResult<bool, _> = prim.try_as();
+        match expected {
+            Some(v) => assert_eq!(ret.unwrap(), v),
+            None => assert!(ret.is_err()),
+        }
+    }
+
+    #[rstest]
+    #[case::i128(Primitive::from(i128::MAX), None)]
+    #[case::f64(Primitive::from(99.0f64), None)]
+    #[case::str(Primitive::from("abc"), Some("abc"))]
+    #[case::bool(Primitive::from(true), None)]
+    fn test_primitive_try_as_ref_str(#[case] prim: Primitive, #[case] expected: Option<&str>) {
+        let ret: StdResult<&str, _> = prim.try_as_ref();
+        match expected {
+            Some(v) => assert_eq!(ret.unwrap(), v),
+            None => assert!(ret.is_err()),
+        }
     }
 }

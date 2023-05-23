@@ -93,26 +93,15 @@ impl SqRootTrait for SqRoot {
 
     fn duration(
         &self,
-        s: Option<i128>,
-        ms: Option<i128>,
-        us: Option<i128>,
-        ns: Option<i128>,
+        s: Option<u64>,
+        ms: Option<u64>,
+        us: Option<u64>,
+        ns: Option<u64>,
     ) -> anyhow::Result<SqDuration> {
-        let s_duration = Duration::from_secs(
-            u64::try_from(s.unwrap_or(0)).map_err(|_| anyhow!("s argument must be nonnegative"))?,
-        );
-        let ms_duration = Duration::from_millis(
-            u64::try_from(ms.unwrap_or(0))
-                .map_err(|_| anyhow!("ms argument must be nonnegative"))?,
-        );
-        let us_duration = Duration::from_micros(
-            u64::try_from(us.unwrap_or(0))
-                .map_err(|_| anyhow!("us argument must be nonnegative"))?,
-        );
-        let ns_duration = Duration::from_nanos(
-            u64::try_from(ns.unwrap_or(0))
-                .map_err(|_| anyhow!("ns argument must be nonnegative"))?,
-        );
+        let s_duration = Duration::from_secs(s.unwrap_or(0));
+        let ms_duration = Duration::from_millis(ms.unwrap_or(0));
+        let us_duration = Duration::from_micros(us.unwrap_or(0));
+        let ns_duration = Duration::from_nanos(ns.unwrap_or(0));
 
         let opt_duration = s_duration
             .checked_add(ms_duration)
@@ -125,15 +114,11 @@ impl SqRootTrait for SqRoot {
         }
     }
 
-    fn data_size(&self, value: Option<i128>) -> anyhow::Result<SqDataSize> {
-        let value = value.unwrap_or(0);
-        match u64::try_from(value) {
-            Ok(v) => Ok(SqDataSize::new(v)),
-            Err(_) => Err(anyhow!("Data size value must be non-negative")),
-        }
+    fn data_size(&self, value: Option<u64>) -> anyhow::Result<SqDataSize> {
+        Ok(SqDataSize::new(value.unwrap_or(0)))
     }
 
-    fn user(&self, opt_username: Option<&str>, opt_uid: Option<i128>) -> anyhow::Result<SqUser> {
+    fn user(&self, opt_username: Option<&str>, opt_uid: Option<u32>) -> anyhow::Result<SqUser> {
         if let Some(username) = opt_username {
             if opt_uid.is_some() {
                 return Err(anyhow!(
@@ -142,25 +127,13 @@ impl SqRootTrait for SqRoot {
             }
             return SqUser::from_name(username);
         }
-        if let Some(uid) = opt_uid {
-            return match u32::try_from(uid) {
-                Ok(u32uid) => SqUser::from_uid(u32uid),
-                Err(_) => Err(anyhow!(
-                    "uid argument {} must be in the range [{},{})",
-                    uid,
-                    0,
-                    u32::MAX
-                )),
-            };
+        match opt_uid {
+            Some(uid) => SqUser::from_uid(uid),
+            None => SqUser::real(),
         }
-        SqUser::real()
     }
 
-    fn group(
-        &self,
-        opt_group_name: Option<&str>,
-        opt_gid: Option<i128>,
-    ) -> anyhow::Result<SqGroup> {
+    fn group(&self, opt_group_name: Option<&str>, opt_gid: Option<u32>) -> anyhow::Result<SqGroup> {
         if let Some(group_name) = opt_group_name {
             if opt_gid.is_some() {
                 return Err(anyhow!(
@@ -169,17 +142,9 @@ impl SqRootTrait for SqRoot {
             }
             return SqGroup::from_name(group_name);
         }
-        if let Some(gid) = opt_gid {
-            return match u32::try_from(gid) {
-                Ok(u32gid) => SqGroup::from_gid(u32gid),
-                Err(_) => Err(anyhow!(
-                    "gid argument {} must be in the range [{},{})",
-                    gid,
-                    0,
-                    u32::MAX
-                )),
-            };
+        match opt_gid {
+            Some(gid) => SqGroup::from_gid(gid),
+            None => SqGroup::real(),
         }
-        SqGroup::real()
     }
 }

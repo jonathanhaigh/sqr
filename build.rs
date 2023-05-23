@@ -253,10 +253,14 @@ impl<'es> SchemaGenerator<'es> {
     /// Generate the internal schema representation of a type of SQ primitive.
     fn quote_primitive_type(name: &str) -> Option<TokenStream2> {
         match name {
-            "PrimitiveBool" => Some(quote! {crate::primitive::PrimitiveKind::Bool}),
-            "PrimitiveInt" => Some(quote! {crate::primitive::PrimitiveKind::Int}),
-            "PrimitiveFloat" => Some(quote! {crate::primitive::PrimitiveKind::Float}),
-            "PrimitiveString" => Some(quote! {crate::primitive::PrimitiveKind::Str}),
+            "I128" => Some(quote! {crate::primitive::PrimitiveKind::I128}),
+            "I64" => Some(quote! {crate::primitive::PrimitiveKind::I64}),
+            "I32" => Some(quote! {crate::primitive::PrimitiveKind::I32}),
+            "U64" => Some(quote! {crate::primitive::PrimitiveKind::U64}),
+            "U32" => Some(quote! {crate::primitive::PrimitiveKind::U32}),
+            "F64" => Some(quote! {crate::primitive::PrimitiveKind::F64}),
+            "Str" => Some(quote! {crate::primitive::PrimitiveKind::Str}),
+            "Bool" => Some(quote! {crate::primitive::PrimitiveKind::Bool}),
             _ => None,
         }
     }
@@ -300,18 +304,34 @@ impl<'es> SchemaGenerator<'es> {
     ) -> Result<TokenStream2> {
         match (param_ext.ty.as_str(), &param_ext.default_value) {
             (_, JsonValue::Null) => Ok(quote! {DefaultValue::Null}),
-            ("PrimitiveBool", JsonValue::Bool(b)) => Ok(quote! {DefaultValue::Bool(#b)}),
-            ("PrimitiveInt", JsonValue::Number(n)) if n.is_i64() => {
+            ("Bool", JsonValue::Bool(b)) => Ok(quote! {DefaultValue::Bool(#b)}),
+            ("I128", JsonValue::Number(n)) if n.is_i64() => {
                 let i = i128::from(n.as_i64().unwrap());
-                Ok(quote! {DefaultValue::Int(#i)})
+                Ok(quote! {DefaultValue::I128(#i)})
+            }
+            ("I64", JsonValue::Number(n)) if n.is_i64() => {
+                let i = n.as_i64().unwrap();
+                Ok(quote! {DefaultValue::I64(#i)})
+            }
+            ("I32", JsonValue::Number(n)) if n.is_i64() => {
+                let i = i32::try_from(n.as_i64().unwrap()).unwrap();
+                Ok(quote! {DefaultValue::I32(#i)})
+            }
+            ("U64", JsonValue::Number(n)) if n.is_i64() => {
+                let i = u64::try_from(n.as_i64().unwrap()).unwrap();
+                Ok(quote! {DefaultValue::U64(#i)})
+            }
+            ("U32", JsonValue::Number(n)) if n.is_i64() => {
+                let i = u32::try_from(n.as_i64().unwrap()).unwrap();
+                Ok(quote! {DefaultValue::U32(#i)})
             }
             // Note that serde_json::value::Number::is_f64() returns true only if the number is not
             // representable as a u64 or i64 so it wouldn't do what we want here.
-            ("PrimitiveFloat", JsonValue::Number(n)) if n.as_f64().is_some() => {
+            ("F64", JsonValue::Number(n)) if n.as_f64().is_some() => {
                 let f = n.as_f64().unwrap();
-                Ok(quote! {DefaultValue::Float(#f)})
+                Ok(quote! {DefaultValue::F64(#f)})
             }
-            ("PrimitiveString", JsonValue::String(s)) => Ok(quote! {DefaultValue::Str(#s)}),
+            ("Str", JsonValue::String(s)) => Ok(quote! {DefaultValue::Str(#s)}),
             (tn, v) => Err(anyhow!(
                 "schema error at {}::{} param {}: default value {:?} is not a valid {:?}",
                 &type_ext.name,
@@ -389,10 +409,14 @@ impl<'es> SqTypeTraitGenerator<'es> {
     fn generate_trait_method_param(&mut self, param_ext: &ParamExt) -> TokenStream2 {
         let param_name = format_ident!("p_{}", &param_ext.name);
         let mut param_type = match &param_ext.ty[..] {
-            "PrimitiveBool" => quote! {bool},
-            "PrimitiveInt" => quote! {i128},
-            "PrimitiveFloat" => quote! {f64},
-            "PrimitiveString" => quote! {&str},
+            "I128" => quote! {i128},
+            "I64" => quote! {i64},
+            "I32" => quote! {i32},
+            "U64" => quote! {u64},
+            "U32" => quote! {u32},
+            "F64" => quote! {f64},
+            "Str" => quote! {&str},
+            "Bool" => quote! {bool},
             // The internal schema generation should already have errored if the type is invalid so
             // don't worry too much about an informative message.
             s => panic!("invalid param type {}", s),
@@ -553,24 +577,29 @@ impl<'es> SqValueImplementor<'es> {
             .map(|pe| {
                 let arg_index = pe.index;
                 let arg_name = &pe.name;
-                let arg_getter = if pe.required {
-                    quote! {arg}
-                } else {
-                    quote! {opt_arg}
-                };
-                let (arg_type, copied) = match pe.ty.as_str() {
+                let (arg_type, by_ref) = match pe.ty.as_str() {
                     // We're going to get a reference to the arg value as one of the following types.
                     // Unless it's a &str we'll want to clone it before dispatching it to the
                     // field-specific getter.
-                    "PrimitiveBool" => (quote! {bool}, quote! {.copied()}),
-                    "PrimitiveInt" => (quote! {i128}, quote! {.copied()}),
-                    "PrimitiveFloat" => (quote! {f64}, quote! {.copied()}),
-                    "PrimitiveString" => (quote! {str}, quote! {}),
+                    "I128" => (quote! {i128}, false),
+                    "I64" => (quote! {i64}, false),
+                    "U64" => (quote! {u64}, false),
+                    "U32" => (quote! {u32}, false),
+                    "F64" => (quote! {f64}, false),
+                    "Str" => (quote! {str}, true),
+                    "Bool" => (quote! {bool}, false),
                     t => panic!("Unrecognized primitive type {}", t),
                 };
 
+                let arg_getter = match (pe.required, by_ref) {
+                    (true, true) => quote! {arg_ref},
+                    (true, false) => quote! {arg},
+                    (false, true) => quote! {opt_arg_ref},
+                    (false, false) => quote! {opt_arg},
+                };
+
                 quote! {
-                    call_info.#arg_getter::<#arg_type>(#arg_index, #arg_name)? #copied
+                    call_info.#arg_getter::<#arg_type>(#arg_index, #arg_name)?
                 }
             })
             .collect();

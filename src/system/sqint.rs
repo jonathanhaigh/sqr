@@ -17,7 +17,7 @@ impl SqInt {
 
 impl SqIntTrait for SqInt {
     fn to_primitive(&self) -> anyhow::Result<Primitive> {
-        Ok(Primitive::Int(self.value))
+        Ok(Primitive::I128(self.value))
     }
 }
 

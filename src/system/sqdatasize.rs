@@ -28,7 +28,7 @@ impl SqDataSize {
 
 impl SqDataSizeTrait for SqDataSize {
     fn to_primitive(&self) -> anyhow::Result<Primitive> {
-        Ok(Primitive::Int(i128::from(self.value)))
+        Ok(Primitive::I128(i128::from(self.value)))
     }
 
     fn b(&self) -> anyhow::Result<SqInt> {

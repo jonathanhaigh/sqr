@@ -12,7 +12,7 @@ use crate::ast;
 use crate::error::{Error, OptResult, Result};
 use crate::fieldcall::FieldAccessKind;
 use crate::lexer::{Token, TokenKind};
-use crate::primitive::Primitive::{Bool, Float, Int, Str};
+use crate::primitive::Primitive::{Bool, Str, F64, I128};
 use crate::util::return_none_or_err;
 
 /// An SQ query parser.
@@ -706,13 +706,13 @@ impl<'q> Parser<'q> {
         if let Some((span, int_val)) = self.parse_int()? {
             return Ok(Some(ast::Literal {
                 span,
-                value: Int(int_val),
+                value: I128(int_val),
             }));
         }
         if let Some((span, float_val)) = self.parse_float()? {
             return Ok(Some(ast::Literal {
                 span,
-                value: Float(float_val),
+                value: F64(float_val),
             }));
         }
         if let Some((span, string_val)) = self.parse_str()? {
@@ -1030,11 +1030,11 @@ mod tests {
                     pos_args: vec![
                         ast::Literal {
                             span: (3, 3).into(),
-                            value: Float(1.2),
+                            value: F64(1.2),
                         },
                         ast::Literal {
                             span: (8, 1).into(),
-                            value: Int(5),
+                            value: I128(5),
                         }
                     ],
                     named_args: ast::NamedArgs::new(),
@@ -1076,7 +1076,7 @@ mod tests {
                             },
                             literal: ast::Literal {
                                 span: (15, 4).into(),
-                                value: Float(-5.8),
+                                value: F64(-5.8),
                             },
                         },
                     ],
@@ -1109,7 +1109,7 @@ mod tests {
                         },
                         literal: ast::Literal {
                             span: (15, 2).into(),
-                            value: Int(42),
+                            value: I128(42),
                         },
                     }],
                 }),
@@ -1338,7 +1338,7 @@ mod tests {
             "1234",
             ast::Literal {
                 span: (0, 4).into(),
-                value: Int(1234)
+                value: I128(1234)
             }
         ),
         (
@@ -1347,7 +1347,7 @@ mod tests {
             "1.234",
             ast::Literal {
                 span: (0, 5).into(),
-                value: Float(1.234)
+                value: F64(1.234)
             }
         ),
         (
@@ -1385,7 +1385,7 @@ mod tests {
                 },
                 literal: ast::Literal {
                     span: (2, 2).into(),
-                    value: Int(99)
+                    value: I128(99)
                 },
             }
         ),
@@ -1401,7 +1401,7 @@ mod tests {
                 },
                 literal: ast::Literal {
                     span: (2, 3).into(),
-                    value: Float(9.9),
+                    value: F64(9.9),
                 },
             }
         ),
@@ -1683,7 +1683,7 @@ mod tests {
                 },
                 literal: ast::Literal {
                     span: (9, 2).into(),
-                    value: Int(-7)
+                    value: I128(-7)
                 },
             }
         ),
@@ -1700,7 +1700,7 @@ mod tests {
                 },
                 literal: ast::Literal {
                     span: (3, 2).into(),
-                    value: Int(-7)
+                    value: I128(-7)
                 },
             }
         ),
@@ -1717,7 +1717,7 @@ mod tests {
                 },
                 literal: ast::Literal {
                     span: (13, 5).into(),
-                    value: Float(1.7e9)
+                    value: F64(1.7e9)
                 },
             }
         ),
@@ -1734,7 +1734,7 @@ mod tests {
                 },
                 literal: ast::Literal {
                     span: (2, 5).into(),
-                    value: Float(1.7e9)
+                    value: F64(1.7e9)
                 },
             }
         ),
@@ -1785,7 +1785,7 @@ mod tests {
                 },
                 literal: ast::Literal {
                     span: (6, 1).into(),
-                    value: Int(9)
+                    value: I128(9)
                 },
             }
         ),
@@ -1802,7 +1802,7 @@ mod tests {
                 },
                 literal: ast::Literal {
                     span: (2, 1).into(),
-                    value: Int(9)
+                    value: I128(9)
                 },
             }
         ),
@@ -1850,7 +1850,7 @@ mod tests {
                 },
                 literal: ast::Literal {
                     span: (12, 1).into(),
-                    value: Int(9)
+                    value: I128(9)
                 },
             }
         ),
@@ -2133,7 +2133,7 @@ mod tests {
                     },
                     literal: ast::Literal {
                         span: (6, 2).into(),
-                        value: Int(10)
+                        value: I128(10)
                     },
                 }))
             }

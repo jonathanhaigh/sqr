@@ -980,6 +980,7 @@ mod tests {
     use super::*;
     use crate::schema;
     use crate::test_util::{fake_field_call_ast, fake_int_literal, gen_sqbvalue_seq, SequenceType};
+    use crate::util::TryAs;
 
     fn fake_slice(start: Option<i128>, stop: Option<i128>, step: Option<i128>) -> ast::Slice {
         ast::Slice {
@@ -1005,8 +1006,14 @@ mod tests {
         let got = filter
             .filter(seq)
             .unwrap()
-            .map(|f| i128::try_from(f.unwrap().get_primitive(&call_info).unwrap()).unwrap())
-            .collect::<Vec<_>>();
+            .map(|f| {
+                f.unwrap()
+                    .get_primitive(&call_info)
+                    .unwrap()
+                    .try_as()
+                    .unwrap()
+            })
+            .collect::<Vec<i128>>();
 
         let expected = slyce::Slice {
             start: start.map(|i| isize::try_from(i).unwrap()).into(),
