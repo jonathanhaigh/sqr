@@ -9,10 +9,10 @@ use std::fmt;
 use crate::ast;
 use crate::error::{Error, OptResult, Result};
 use crate::filter;
-use crate::primitive::Primitive;
+use crate::primitive::{Primitive, PrimitiveTryAsError};
 use crate::schema;
 use crate::schema::{FieldSchema, TypeSchema};
-use crate::util::{return_none_or_err, TryAsRef};
+use crate::util::{return_none_or_err, TryAs, TryAsRef};
 
 /// The sequence type returned by a field call.
 #[must_use]
@@ -118,7 +118,25 @@ impl<'a> FieldCallInfo<'a> {
         self.type_schema().name()
     }
 
-    /// Get an argument passed to the field call.
+    fn opt_arg_literal(&self, index: usize, name: &str) -> OptResult<&ast::Literal> {
+        let arg_pack = return_none_or_err!(Ok(self.ast.opt_arg_pack.as_ref()));
+
+        if index < arg_pack.pos_args.len() {
+            return Ok(Some(&arg_pack.pos_args[index]));
+        }
+
+        let opt_named_arg = &arg_pack
+            .named_args
+            .iter()
+            .find(|arg| arg.ident.name == name);
+
+        if let Some(named_arg) = opt_named_arg {
+            return Ok(Some(&named_arg.literal));
+        }
+        Ok(None)
+    }
+
+    /// Get a copy of an argument passed to the field call.
     ///
     /// # Parameters
     /// - `index`: the zero-based index of the parameter for which an argument is requested.
@@ -126,48 +144,87 @@ impl<'a> FieldCallInfo<'a> {
     ///
     /// # Type Parameters
     /// - `T` - the required type of the argument. This should be the underlying Rust data type
-    /// (`i64`, `f64`, `bool` or `str`).
+    /// (`i128`, i64`, `u64`, f64`, or `bool`).
+    ///
+    /// # Returns
+    /// - A copy of the value of the argument if it is found in the AST.
+    /// - `Error::ArgMissing`: if the argument is not found.
+    /// - `Error::ArgTypeMismatch`: if the type of the argument does not match `T`.
+    /// - `Error::ConvertIntegerArg`: if the arg value doesn't fit in the target type.
+    pub fn opt_arg<T>(&self, index: usize, name: &str) -> OptResult<T>
+    where
+        Primitive: TryAs<T, Error = PrimitiveTryAsError>,
+        T: Copy,
+    {
+        let literal = return_none_or_err!(self.opt_arg_literal(index, name));
+
+        match literal.value.try_as() {
+            Ok(v) => Ok(Some(v)),
+            Err(PrimitiveTryAsError::IntConversion { value, .. }) => {
+                Err(self.convert_integer_arg_error(name, value, literal))
+            }
+            Err(PrimitiveTryAsError::TypeMismatch { .. }) => {
+                Err(self.arg_type_mismatch_error(name, literal))
+            }
+        }
+    }
+
+    /// Get a required argument passed to the field call.
+    ///
+    /// This method acts like the `opt_arg` method, except that it returns a `Result<T>` rather
+    /// than an `OptResult<T>` and it returns an error if the argument is not found.
+    pub fn arg<T>(&self, index: usize, name: &str) -> Result<T>
+    where
+        Primitive: TryAs<T, Error = PrimitiveTryAsError>,
+        T: Copy,
+    {
+        match self.opt_arg(index, name) {
+            Ok(Some(v)) => Ok(v),
+            Ok(None) => Err(self.arg_missing_error(name)),
+            Err(e) => Err(e),
+        }
+    }
+
+    /// Get a reference to an argument passed to the field call.
+    ///
+    /// # Parameters
+    /// - `index`: the zero-based index of the parameter for which an argument is requested.
+    /// - `name`: the name of the parameter for which an argument is requested.
+    ///
+    /// # Type Parameters
+    /// - `T` - the required type of the argument. This should be the underlying Rust data type
+    /// (`str`).
     ///
     /// # Returns
     /// - A reference to the value of the argument if it is found in the AST.
     /// - `Error::ArgMissing`: if the argument is not found.
     /// - `Error::ArgTypeMismatch`: if the type of the argument does not match `T`.
-    pub fn opt_arg<T: ?Sized>(&self, index: usize, name: &str) -> OptResult<&T>
+    pub fn opt_arg_ref<T: ?Sized>(&self, index: usize, name: &str) -> OptResult<&T>
     where
-        Primitive: TryAsRef<T>,
+        Primitive: TryAsRef<T, Error = PrimitiveTryAsError>,
     {
-        let arg_pack = return_none_or_err!(Ok(self.ast.opt_arg_pack.as_ref()));
-
-        let literal = if index < arg_pack.pos_args.len() {
-            &arg_pack.pos_args[index]
-        } else {
-            let opt_named_arg = &arg_pack
-                .named_args
-                .iter()
-                .find(|arg| arg.ident.name == name);
-
-            if let Some(named_arg) = opt_named_arg {
-                &named_arg.literal
-            } else {
-                return Ok(None);
-            }
-        };
+        let literal = return_none_or_err!(self.opt_arg_literal(index, name));
 
         match literal.value.try_as_ref() {
-            Some(v) => Ok(Some(v)),
-            None => Err(self.arg_type_mismatch_error(name, literal)),
+            Ok(v) => Ok(Some(v)),
+            Err(PrimitiveTryAsError::IntConversion { value, .. }) => {
+                Err(self.convert_integer_arg_error(name, value, literal))
+            }
+            Err(PrimitiveTryAsError::TypeMismatch { .. }) => {
+                Err(self.arg_type_mismatch_error(name, literal))
+            }
         }
     }
 
-    /// Get an optional argument passed to the field call.
+    /// Get a reference to a required argument passed to the field call.
     ///
-    /// This method acts like the `arg` method, except that it returns an `Option<&T>` rather than
-    /// a `&T` and it returns `Ok(None)` rather than an error if the argument is not found.
-    pub fn arg<T: ?Sized>(&self, index: usize, name: &str) -> Result<&T>
+    /// This method acts like the `opt_arg_ref` method, except that it returns a `Result<&T>`
+    /// rather than an `OptResult<&T>` and it returns an error if the argument is not found.
+    pub fn arg_ref<T: ?Sized>(&self, index: usize, name: &str) -> Result<&T>
     where
-        Primitive: TryAsRef<T>,
+        Primitive: TryAsRef<T, Error = PrimitiveTryAsError>,
     {
-        match self.opt_arg(index, name) {
+        match self.opt_arg_ref(index, name) {
             Ok(Some(v)) => Ok(v),
             Ok(None) => Err(self.arg_missing_error(name)),
             Err(e) => Err(e),
@@ -224,6 +281,33 @@ impl<'a> FieldCallInfo<'a> {
                 .name()
                 .to_owned(),
             got: got.value.kind_name().to_owned(),
+        })
+    }
+
+    /// Create a `ConvertIntegerArg` error corresponding to an argument of this field call.
+    ///
+    /// # Parameters
+    /// - `name`: the name of the argument.
+    /// - `got`: the AST node of value that has an invalid type.
+    pub fn convert_integer_arg_error(
+        &self,
+        name: &str,
+        value: i128,
+        literal: &ast::Literal,
+    ) -> Box<Error> {
+        Box::new(Error::ConvertIntegerArg {
+            span: literal.span,
+            type_name: self.type_name().to_owned(),
+            field_name: self.field_name().to_owned(),
+            param_name: name.to_owned(),
+            param_type: self
+                .schema
+                .param_by_name(name)
+                .unwrap()
+                .ty()
+                .name()
+                .to_owned(),
+            value,
         })
     }
 

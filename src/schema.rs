@@ -148,7 +148,7 @@ impl ParamSchema {
 
     /// Get the schema for the SQ primitive type of the parameter.
     ///
-    /// This is an SQ primitive type (i.e. Int, Float, Bool or Str).
+    /// This is an SQ primitive type (i.e. I128, ..., F64, Bool or Str).
     pub fn ty(&self) -> PrimitiveKind {
         self.ty
     }
@@ -167,8 +167,12 @@ impl ParamSchema {
 /// A representation of a parameter's default value
 #[derive(Clone, Debug, PartialEq)]
 pub enum DefaultValue {
-    Int(i128),
-    Float(f64),
+    I128(i128),
+    I64(i64),
+    I32(i32),
+    U64(u64),
+    U32(u32),
+    F64(f64),
     Str(&'static str),
     Bool(bool),
     Null,
@@ -178,8 +182,12 @@ impl DefaultValue {
     /// Convert a default value schema into a `Primitive` containing its value.
     pub fn to_primitive(&self) -> Option<Primitive> {
         match self {
-            DefaultValue::Int(i) => Some(Primitive::Int(*i)),
-            DefaultValue::Float(f) => Some(Primitive::Float(*f)),
+            DefaultValue::I128(i) => Some(Primitive::I128(*i)),
+            DefaultValue::I64(i) => Some(Primitive::I64(*i)),
+            DefaultValue::I32(i) => Some(Primitive::I32(*i)),
+            DefaultValue::U64(i) => Some(Primitive::U64(*i)),
+            DefaultValue::U32(i) => Some(Primitive::U32(*i)),
+            DefaultValue::F64(f) => Some(Primitive::F64(*f)),
             DefaultValue::Str(s) => Some(Primitive::Str(s.to_string())),
             DefaultValue::Bool(b) => Some(Primitive::Bool(*b)),
             DefaultValue::Null => None,

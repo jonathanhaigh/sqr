@@ -19,7 +19,7 @@ impl SqDuration {
 
 impl SqDurationTrait for SqDuration {
     fn to_primitive(&self) -> anyhow::Result<Primitive> {
-        Ok(Primitive::Float(self.value.as_secs_f64()))
+        Ok(Primitive::F64(self.value.as_secs_f64()))
     }
 
     fn s(&self) -> anyhow::Result<SqInt> {

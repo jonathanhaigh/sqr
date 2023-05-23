@@ -49,10 +49,10 @@ test_simple_query_approx_f64_ulp!(
 
 test_simple_query_err!(
     sqroot_duration_err,
-    neg_secs, "duration(s=-1)", System;
-    neg_millis, "duration(ms=-1)", System;
-    neg_micros, "duration(us=-1)", System;
-    neg_nanos, "duration(ns=-1)", System;
+    neg_secs, "duration(s=-1)", ConvertIntegerArg;
+    neg_millis, "duration(ms=-1)", ConvertIntegerArg;
+    neg_micros, "duration(us=-1)", ConvertIntegerArg;
+    neg_nanos, "duration(ns=-1)", ConvertIntegerArg;
 );
 
 test_simple_query_ok!(
@@ -64,8 +64,8 @@ test_simple_query_ok!(
 
 test_simple_query_err!(
     sqroot_data_size_err,
-    minus_one, "<data_size(-1)", System;
-    i64_min, "<data_size(-9223372036854775808)", System;
+    minus_one, "<data_size(-1)", ConvertIntegerArg;
+    i64_min, "<data_size(-9223372036854775808)", ConvertIntegerArg;
 );
 
 test_simple_query_ok!(
@@ -133,7 +133,7 @@ test_simple_query_ok!(
 
 test_simple_query_err!(
     sqroot_user_err,
-    invalid_uid, "user(uid=4294967296)", System; // u32::MAX + 1
+    invalid_uid, "user(uid=4294967296)", ConvertIntegerArg; // u32::MAX + 1
 );
 
 #[test]
@@ -186,5 +186,5 @@ test_simple_query_ok!(
 
 test_simple_query_err!(
     sqroot_group_err,
-    invalid_gid, "group(gid=4294967296)", System; // u32::MAX + 1
+    invalid_gid, "group(gid=4294967296)", ConvertIntegerArg; // u32::MAX + 1
 );

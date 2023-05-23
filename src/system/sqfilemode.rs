@@ -19,7 +19,7 @@ impl SqFileMode {
 
 impl SqFileModeTrait for SqFileMode {
     fn to_primitive(&self) -> anyhow::Result<Primitive> {
-        Ok(Primitive::Int(i128::from(self.mode.bits())))
+        Ok(Primitive::I128(i128::from(self.mode.bits())))
     }
 
     fn permissions(&self) -> anyhow::Result<SqInt> {

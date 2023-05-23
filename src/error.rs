@@ -27,6 +27,7 @@ pub enum ErrorKind {
     FilterIndexOutOfBounds,
     SliceStepZero,
     ConvertInteger,
+    ConvertIntegerArg,
     NonSingleFieldInComparison,
     ComparisonTypeMismatch,
 }
@@ -215,6 +216,21 @@ pub enum Error {
         value: String,
     },
 
+    /// An error converting to and argument's integer type.
+    #[error(
+        "error converting integer {value} to {type_name}::{field_name} {param_name} argument type {param_type}"
+    )]
+    ConvertIntegerArg {
+        #[label("failed conversion")]
+        span: SourceSpan,
+
+        type_name: String,
+        field_name: String,
+        param_name: String,
+        param_type: String,
+        value: i128,
+    },
+
     /// Field that doesn't return Single sequence type in a comparison filter.
     #[error(
         "non-Single return sequence type {sequence_type} for {type_name}::{field_name} cannot be used in comparison filters"
@@ -265,6 +281,7 @@ impl Error {
             Error::FilterIndexOutOfBounds { .. } => ErrorKind::FilterIndexOutOfBounds,
             Error::SliceStepZero { .. } => ErrorKind::SliceStepZero,
             Error::ConvertInteger { .. } => ErrorKind::ConvertInteger,
+            Error::ConvertIntegerArg { .. } => ErrorKind::ConvertIntegerArg,
             Error::NonSingleFieldInComparison { .. } => ErrorKind::NonSingleFieldInComparison,
             Error::ComparisonTypeMismatch { .. } => ErrorKind::ComparisonTypeMismatch,
         }
