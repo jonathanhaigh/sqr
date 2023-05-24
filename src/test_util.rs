@@ -76,7 +76,7 @@ pub fn gen_sqint_seq(seq_type: SequenceType, len: usize) -> SqValueSequence<'sta
 
 pub fn sqbvalue_to_primitive(sqbvalue: SqBValue) -> Primitive {
     let field_call_ast = fake_field_call_ast();
-    let call_info = FieldCallInfo::new(&field_call_ast, schema::root_field());
+    let call_info = FieldCallInfo::new(&field_call_ast, schema::root_field()).unwrap();
     sqbvalue.get_primitive(&call_info).unwrap()
 }
 
@@ -86,7 +86,7 @@ pub fn field_call_result_to_primitive(result: Result<SqBValue>) -> Primitive {
 
 fn sqbvalue_seq_to_vec_of_opt_prims(seq: SqBValueSequence) -> Vec<Option<Primitive>> {
     let field_call_ast = fake_field_call_ast();
-    let call_info = FieldCallInfo::new(&field_call_ast, schema::root_field());
+    let call_info = FieldCallInfo::new(&field_call_ast, schema::root_field()).unwrap();
     seq.map(|result| result.ok().map(|v| v.get_primitive(&call_info).unwrap()))
         .collect::<Vec<_>>()
 }

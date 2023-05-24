@@ -4,14 +4,16 @@
 
 //! Types related to field calls.
 
+use std::collections::HashMap;
 use std::fmt;
+
+use miette::SourceSpan;
 
 use crate::ast;
 use crate::error::{Error, OptResult, Result};
 use crate::filter;
-use crate::primitive::{Primitive, PrimitiveTryAsError};
-use crate::schema;
-use crate::schema::{FieldSchema, TypeSchema};
+use crate::primitive::{Primitive, PrimitiveKind, PrimitiveTryAsError};
+use crate::schema::{self, FieldSchema, TypeSchema};
 use crate::util::{return_none_or_err, TryAs, TryAsRef};
 
 /// The sequence type returned by a field call.
@@ -60,15 +62,13 @@ impl<'a> FieldCallInfo<'a> {
     /// # Parameters
     /// - `ast`: the AST node representing the field call.
     /// - `schema`: the schema for the field.
-    pub fn new(ast: &'a ast::FieldCall, schema: &'static FieldSchema) -> Self {
-        // TODO: We could return a Result here and do some checks:
-        // * That all args are valid.
-        // * That required args are present. This is currently done at the time a field is called
-        //   when generating results, but we could catch errors earlier (before results start
-        //   streaming to the serializer).
-        // * That filters are valid. This is currently done at the time the filter is used when
-        //   generating results, but we could catch errors earlier.
-        Self { ast, schema }
+    pub fn new(ast: &'a ast::FieldCall, schema: &'static FieldSchema) -> Result<Self> {
+        // TODO: check that filters are valid. This is currently done at the time the filter is
+        // used when generating results, but we could catch errors earlier.
+        let ret = Self { ast, schema };
+        ret.validate_args()?;
+
+        Ok(ret)
     }
 
     /// Get the AST node corresponding to the field access.
@@ -116,6 +116,91 @@ impl<'a> FieldCallInfo<'a> {
     /// Get the name of the type on which the field is being accessed.
     pub fn type_name(&self) -> &'static str {
         self.type_schema().name()
+    }
+
+    /// Check that the field call's arguments are valid and complete.
+    pub fn validate_args(&self) -> Result<()> {
+        let Some(arg_pack) = self.ast.opt_arg_pack.as_ref() else {
+            return Ok(());
+        };
+
+        let num_args = arg_pack.pos_args.len() + arg_pack.named_args.len();
+        let num_params = self.schema.params().len();
+        if num_args > num_params {
+            return Err(self.too_many_args_error(arg_pack, num_params, num_args));
+        }
+
+        let mut seen_named: HashMap<&str, &ast::NamedArg> = HashMap::new();
+        for named_arg in &arg_pack.named_args {
+            let name = named_arg.ident.name.as_str();
+
+            if let Some(prev_named_arg) = seen_named.insert(name, named_arg) {
+                return Err(self.repeated_arg_error(name, named_arg.span, prev_named_arg.span));
+            }
+
+            let Some(schema) = self.schema().param_by_name(name) else {
+                return Err(self.invalid_arg_name_error(named_arg));
+            };
+
+            if let Some(pos_arg) = arg_pack.pos_args.get(schema.index()) {
+                return Err(self.repeated_arg_error(name, named_arg.span, pos_arg.span));
+            }
+        }
+
+        for param in self.schema().params() {
+            match (param.ty(), param.required()) {
+                (PrimitiveKind::I128, true) => {
+                    self.arg::<i128>(param.index(), param.name())?;
+                }
+                (PrimitiveKind::I64, true) => {
+                    self.arg::<i64>(param.index(), param.name())?;
+                }
+                (PrimitiveKind::I32, true) => {
+                    self.arg::<i32>(param.index(), param.name())?;
+                }
+                (PrimitiveKind::U64, true) => {
+                    self.arg::<u64>(param.index(), param.name())?;
+                }
+                (PrimitiveKind::U32, true) => {
+                    self.arg::<u32>(param.index(), param.name())?;
+                }
+                (PrimitiveKind::F64, true) => {
+                    self.arg::<f64>(param.index(), param.name())?;
+                }
+                (PrimitiveKind::Str, true) => {
+                    self.arg_ref::<str>(param.index(), param.name())?;
+                }
+                (PrimitiveKind::Bool, true) => {
+                    self.arg::<bool>(param.index(), param.name())?;
+                }
+                (PrimitiveKind::I128, false) => {
+                    self.opt_arg::<i128>(param.index(), param.name())?;
+                }
+                (PrimitiveKind::I64, false) => {
+                    self.opt_arg::<i64>(param.index(), param.name())?;
+                }
+                (PrimitiveKind::I32, false) => {
+                    self.opt_arg::<i32>(param.index(), param.name())?;
+                }
+                (PrimitiveKind::U64, false) => {
+                    self.opt_arg::<u64>(param.index(), param.name())?;
+                }
+                (PrimitiveKind::U32, false) => {
+                    self.opt_arg::<u32>(param.index(), param.name())?;
+                }
+                (PrimitiveKind::F64, false) => {
+                    self.opt_arg::<f64>(param.index(), param.name())?;
+                }
+                (PrimitiveKind::Str, false) => {
+                    self.opt_arg_ref::<str>(param.index(), param.name())?;
+                }
+                (PrimitiveKind::Bool, false) => {
+                    self.opt_arg::<bool>(param.index(), param.name())?;
+                }
+            };
+        }
+
+        Ok(())
     }
 
     fn opt_arg_literal(&self, index: usize, name: &str) -> OptResult<&ast::Literal> {
@@ -284,6 +369,45 @@ impl<'a> FieldCallInfo<'a> {
         })
     }
 
+    fn too_many_args_error(
+        &self,
+        arg_pack: &ast::ArgPack,
+        expecting: usize,
+        got: usize,
+    ) -> Box<Error> {
+        Box::new(Error::TooManyArgs {
+            span: arg_pack.span,
+            type_name: self.type_name().to_owned(),
+            field_name: self.field_name().to_owned(),
+            expecting,
+            got,
+        })
+    }
+
+    fn invalid_arg_name_error(&self, arg: &ast::NamedArg) -> Box<Error> {
+        Box::new(Error::InvalidArgName {
+            span: arg.ident.span,
+            type_name: self.type_name().to_owned(),
+            field_name: self.field_name().to_owned(),
+            arg_name: arg.ident.name.clone(),
+        })
+    }
+
+    fn repeated_arg_error(
+        &self,
+        name: &str,
+        span: SourceSpan,
+        prev_span: SourceSpan,
+    ) -> Box<Error> {
+        Box::new(Error::RepeatedArg {
+            span,
+            prev_span,
+            type_name: self.type_name().to_owned(),
+            field_name: self.field_name().to_owned(),
+            param_name: name.to_owned(),
+        })
+    }
+
     /// Create a `ConvertIntegerArg` error corresponding to an argument of this field call.
     ///
     /// # Parameters
@@ -360,7 +484,7 @@ impl<'a> FieldCallInfoTree<'a> {
     pub fn new(query: &'a ast::Query) -> Result<Self> {
         let root_field_schema = schema::root_field();
         Ok(Self {
-            info: FieldCallInfo::new(&query.dummy_field_call, root_field_schema),
+            info: FieldCallInfo::new(&query.dummy_field_call, root_field_schema)?,
             children: query
                 .field_trees
                 .iter()
@@ -431,7 +555,7 @@ impl<'a> FieldCallInfoTree<'a> {
         };
 
         Ok(Self {
-            info: FieldCallInfo::new(field_call, field_schema),
+            info: FieldCallInfo::new(field_call, field_schema)?,
             children,
         })
     }

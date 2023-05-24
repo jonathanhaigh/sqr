@@ -174,13 +174,13 @@ fn sqroot_group_by_gid() {
 fn sqroot_group_by_both_gid_and_name_err() {
     let gid_json = get_query("<user.<group.<gid").unwrap();
     let name_json = get_query("<user.<group.<name").unwrap();
-    let query = format!("<group(gid={}, group_name={})", gid_json, name_json);
+    let query = format!("<group(gid={}, name={})", gid_json, name_json);
     test_query_err(&query, ErrorKind::System);
 }
 
 test_simple_query_ok!(
     sqroot_group,
-    root_by_name, "<group(group_name=\"root\").<gid", json!(0);
+    root_by_name, "<group(name=\"root\").<gid", json!(0);
     root_by_gid, "<group(gid=0).<name", json!("root");
 );
 

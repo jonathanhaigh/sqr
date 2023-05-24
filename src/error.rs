@@ -15,8 +15,10 @@ pub enum ErrorKind {
     Lex,
     UnexpectedToken,
     ParseValue,
-    RepeatedNamedArg,
+    RepeatedArg,
     ArgTypeMismatch,
+    TooManyArgs,
+    InvalidArgName,
     Serialize,
     ArgMissing,
     InvalidField,
@@ -68,19 +70,21 @@ pub enum Error {
         desc: String,
     },
 
-    /// An error when a named argument in a parameter pack is specified multiple times.
+    /// An error when an argument in a parameter pack is specified multiple times.
     ///
     /// E.g. `path.children(recurse=true, recurse=true)`.
-    #[error("named arg {name} given more than once")]
+    #[error("{param_name} arg given more than once for {type_name}::{field_name}")]
     #[diagnostic()]
-    RepeatedNamedArg {
-        name: String,
-
-        #[label("first given here")]
+    RepeatedArg {
+        #[label("then here")]
         span: SourceSpan,
 
-        #[label("then here")]
+        #[label("first given here")]
         prev_span: SourceSpan,
+
+        type_name: String,
+        field_name: String,
+        param_name: String,
     },
 
     /// An error when an argument's type is incorrect.
@@ -97,6 +101,31 @@ pub enum Error {
         param_name: String,
         expecting: String,
         got: String,
+    },
+
+    /// An error when a field is called with too many arguments.
+    #[error("too many arguments for {type_name}::{field_name}: expecting {expecting}, got {got}")]
+    #[diagnostic()]
+    TooManyArgs {
+        #[label("too many arguments")]
+        span: SourceSpan,
+
+        type_name: String,
+        field_name: String,
+        expecting: usize,
+        got: usize,
+    },
+
+    /// An error when a named argument has an invalid name.
+    #[error("invalid argument name {arg_name} for {type_name}::{field_name}")]
+    #[diagnostic()]
+    InvalidArgName {
+        #[label("invalid argument name")]
+        span: SourceSpan,
+
+        type_name: String,
+        field_name: String,
+        arg_name: String,
     },
 
     /// An error when the output serializer fails.
@@ -245,7 +274,7 @@ pub enum Error {
     },
 
     /// Invalid comparison filter operand types.
-    #[error("Type mismatch in comparison filter for {type_name}::{field_name}: left operand has type {lhs} and right operand has type {rhs}")]
+    #[error("type mismatch in comparison filter for {type_name}::{field_name}: left operand has type {lhs} and right operand has type {rhs}")]
     ComparisonTypeMismatch {
         #[label("failed conversion")]
         span: SourceSpan,
@@ -269,8 +298,10 @@ impl Error {
             Error::Lex { .. } => ErrorKind::Lex,
             Error::UnexpectedToken { .. } => ErrorKind::UnexpectedToken,
             Error::ParseValue { .. } => ErrorKind::ParseValue,
-            Error::RepeatedNamedArg { .. } => ErrorKind::RepeatedNamedArg,
+            Error::RepeatedArg { .. } => ErrorKind::RepeatedArg,
             Error::ArgTypeMismatch { .. } => ErrorKind::ArgTypeMismatch,
+            Error::TooManyArgs { .. } => ErrorKind::TooManyArgs,
+            Error::InvalidArgName { .. } => ErrorKind::InvalidArgName,
             Error::Serialize { .. } => ErrorKind::Serialize,
             Error::ArgMissing { .. } => ErrorKind::ArgMissing,
             Error::InvalidField { .. } => ErrorKind::InvalidField,

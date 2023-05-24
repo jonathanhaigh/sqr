@@ -838,7 +838,7 @@
                     "name": "group",
                     "doc": [
                         "Get an SqGroup system object",
-                        "The group to get can be specified by either the `group_name` parameter or the `gid` parameter, but not both.",
+                        "The group to get can be specified by either the `name` parameter or the `gid` parameter, but not both.",
                         "If neither `grou_name` nor `gid` are given, then the (real, not effective) group of the current process is retreived."
                     ],
                     "return_type": "SqGroup",
@@ -846,7 +846,7 @@
                     "params": [
                         {
                             "index": 0,
-                            "name": "group_name",
+                            "name": "name",
                             "doc": "The name of the group to get",
                             "type": "Str",
                             "required": false,

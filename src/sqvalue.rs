@@ -251,7 +251,7 @@ mod tests {
     ) {
         let sqint_seq = gen_sqint_seq(seq_type, 5);
         let field_call_ast = fake_field_call_ast();
-        let call_info = FieldCallInfo::new(&field_call_ast, schema::root_field());
+        let call_info = FieldCallInfo::new(&field_call_ast, schema::root_field()).unwrap();
         let sqbvalue_seq =
             SqBValueSequence::from_sq_value_sequence(gen_sqint_seq(seq_type, 5), &call_info);
 
