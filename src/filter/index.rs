@@ -241,7 +241,7 @@ mod tests {
         #[case] expected: Option<i128>,
     ) {
         let field_call_ast = fake_field_call_ast();
-        let call_info = FieldCallInfo::new(&field_call_ast, schema::root_field());
+        let call_info = FieldCallInfo::new(&field_call_ast, schema::root_field()).unwrap();
         let seq = gen_sqbvalue_seq(seq_type, seq_len);
         let int_literal = fake_int_literal(index);
         let filter = IndexFilter::new(&call_info, &int_literal);

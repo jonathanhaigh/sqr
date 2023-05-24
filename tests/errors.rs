@@ -15,7 +15,10 @@ test_simple_query_err!(
     float_too_big, "float(10.0E+308)", ParseValue;
     float_too_small, "float(10.0E+308)", ParseValue;
     invalid_string, r#"string("\uxxxx")"#, ParseValue;
-    repeated_named_arg, "int(value=10, value=20)", RepeatedNamedArg;
+    repeated_named_arg, "ints(start=10, start=20)", RepeatedArg;
+    repeated_pos_then_named_arg, "ints(10, start=20)", RepeatedArg;
+    too_many_args, "int(10, 10)", TooManyArgs;
+    invalid_arg_name, "int(abcd=10)", InvalidArgName;
     arg_type_mismatch, "int(true)", ArgTypeMismatch;
     invalid_field, "xyzabc", InvalidField;
     invalid_field_on_root, "xyzabc", InvalidField;

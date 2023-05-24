@@ -399,16 +399,6 @@ impl<'q> Parser<'q> {
         }
 
         if let Some(named_arg) = self.parse_named_arg()? {
-            if let Some(prev) = named_args
-                .iter()
-                .find(|na| na.ident.name == named_arg.ident.name)
-            {
-                return Err(Box::new(Error::RepeatedNamedArg {
-                    span: named_arg.span,
-                    name: named_arg.ident.name.clone(),
-                    prev_span: prev.span,
-                }));
-            }
             named_args.push(named_arg);
             return Ok(Some(()));
         }

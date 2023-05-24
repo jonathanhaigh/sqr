@@ -999,7 +999,7 @@ mod tests {
         seq_len: usize,
     ) -> std::result::Result<(), String> {
         let field_call_ast = fake_field_call_ast();
-        let call_info = FieldCallInfo::new(&field_call_ast, schema::root_field());
+        let call_info = FieldCallInfo::new(&field_call_ast, schema::root_field()).unwrap();
         let seq = gen_sqbvalue_seq(seq_type, seq_len);
         let slice_ast = fake_slice(start, stop, step);
         let filter = SliceFilter::new(&call_info, &slice_ast);
