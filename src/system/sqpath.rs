@@ -35,8 +35,8 @@ impl SqPathTrait for SqPath {
         Ok(Primitive::Str(self.to_str()?.to_owned()))
     }
 
-    fn string(&self, replace_invalid: Option<bool>) -> anyhow::Result<SqString> {
-        if replace_invalid.unwrap_or(false) {
+    fn string(&self, replace_invalid: bool) -> anyhow::Result<SqString> {
+        if replace_invalid {
             Ok(SqString::new(self.path.to_string_lossy().into_owned()))
         } else {
             Ok(SqString::new(self.to_str()?.to_owned()))
@@ -69,25 +69,19 @@ impl SqPathTrait for SqPath {
 
     fn children(
         &self,
-        recurse: Option<bool>,
-        follow_symlinks: Option<bool>,
-        skip_permission_denied: Option<bool>,
-        same_filesystem: Option<bool>,
+        recurse: bool,
+        follow_symlinks: bool,
+        skip_permission_denied: bool,
+        same_filesystem: bool,
     ) -> anyhow::Result<SqValueSequence<SqPath>> {
-        let skip_permission_denied = skip_permission_denied.unwrap_or(false);
-
-        let max_depth = if recurse.unwrap_or(false) {
-            usize::MAX
-        } else {
-            1
-        };
+        let max_depth = if recurse { usize::MAX } else { 1 };
 
         Ok(SqValueSequence::Iterator(Box::new(
             WalkDir::new(&self.path)
                 .min_depth(1)
                 .max_depth(max_depth)
-                .follow_links(follow_symlinks.unwrap_or(true))
-                .same_file_system(same_filesystem.unwrap_or(false))
+                .follow_links(follow_symlinks)
+                .same_file_system(same_filesystem)
                 .into_iter()
                 .filter_map(move |result| match result {
                     Ok(dirent) => Some(Ok(SqPath::new(dirent.path().to_owned()))),
@@ -132,8 +126,8 @@ impl SqPathTrait for SqPath {
         Ok(SqBool::new(self.path.is_absolute()))
     }
 
-    fn file(&self, follow_symlinks: Option<bool>) -> anyhow::Result<Option<SqFile>> {
-        let stat_result = if follow_symlinks.unwrap_or(true) {
+    fn file(&self, follow_symlinks: bool) -> anyhow::Result<Option<SqFile>> {
+        let stat_result = if follow_symlinks {
             stat::stat(&self.path)
         } else {
             stat::lstat(&self.path)

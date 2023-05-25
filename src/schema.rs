@@ -3,11 +3,13 @@
 // SPDX-License-Identifier: MIT
 
 //! Provides access to the SQ type and field schema.
+use std::result::Result as StdResult;
 
 use phf::{phf_map, phf_ordered_map};
 
 use crate::fieldcall::FieldSequenceType;
-use crate::primitive::{Primitive, PrimitiveKind};
+use crate::primitive::{Primitive, PrimitiveKind, PrimitiveTryAsError};
+use crate::util::{TryAs, TryAsRef};
 
 type TypeMap = phf::Map<&'static str, TypeSchema>;
 type FieldMap = phf::Map<&'static str, FieldSchema>;
@@ -24,12 +26,12 @@ pub struct TypeSchema {
 
 impl TypeSchema {
     /// Get the name of the SQ type.
-    pub fn name(&self) -> &str {
+    pub fn name(&self) -> &'static str {
         self.name
     }
 
     /// Get the documentation for the SQ type.
-    pub fn doc(&self) -> &str {
+    pub fn doc(&self) -> &'static str {
         self.doc
     }
 
@@ -69,22 +71,22 @@ pub struct FieldSchema {
 
 impl FieldSchema {
     /// Get the name of the field.
-    pub fn name(&self) -> &str {
+    pub fn name(&self) -> &'static str {
         self.name
     }
 
     /// Get the documentation for the field.
-    pub fn doc(&self) -> &str {
+    pub fn doc(&self) -> &'static str {
         self.doc
     }
 
     /// Get the schema of the SQ type that owns the field.
-    pub fn parent_type(&self) -> &TypeSchema {
+    pub fn parent_type(&self) -> &'static TypeSchema {
         TYPES.get(self.parent_type).unwrap()
     }
 
     /// Get the schema of the SQ type that the field returns.
-    pub fn return_type(&self) -> &TypeSchema {
+    pub fn return_type(&self) -> &'static TypeSchema {
         TYPES.get(self.return_type).unwrap()
     }
 
@@ -99,7 +101,7 @@ impl FieldSchema {
     }
 
     /// Get an iterator over the schemas of the field's parameters.
-    pub fn params(&self) -> phf::ordered_map::Values<&str, ParamSchema> {
+    pub fn params(&self) -> phf::ordered_map::Values<&'static str, ParamSchema> {
         self.params.values()
     }
 
@@ -124,7 +126,7 @@ pub struct ParamSchema {
     doc: &'static str,
     ty: PrimitiveKind,
     required: bool,
-    default: DefaultValue,
+    opt_default: Option<DefaultValue>,
 }
 
 impl ParamSchema {
@@ -159,8 +161,8 @@ impl ParamSchema {
     }
 
     /// Get the default value for the parameter if it has one.
-    pub fn default(&self) -> Option<Primitive> {
-        self.default.to_primitive()
+    pub fn default(&self) -> Option<&DefaultValue> {
+        self.opt_default.as_ref()
     }
 }
 
@@ -175,22 +177,56 @@ pub enum DefaultValue {
     F64(f64),
     Str(&'static str),
     Bool(bool),
-    Null,
 }
 
 impl DefaultValue {
     /// Convert a default value schema into a `Primitive` containing its value.
-    pub fn to_primitive(&self) -> Option<Primitive> {
+    pub fn to_primitive(&self) -> Primitive {
         match self {
-            DefaultValue::I128(i) => Some(Primitive::I128(*i)),
-            DefaultValue::I64(i) => Some(Primitive::I64(*i)),
-            DefaultValue::I32(i) => Some(Primitive::I32(*i)),
-            DefaultValue::U64(i) => Some(Primitive::U64(*i)),
-            DefaultValue::U32(i) => Some(Primitive::U32(*i)),
-            DefaultValue::F64(f) => Some(Primitive::F64(*f)),
-            DefaultValue::Str(s) => Some(Primitive::Str(s.to_string())),
-            DefaultValue::Bool(b) => Some(Primitive::Bool(*b)),
-            DefaultValue::Null => None,
+            DefaultValue::I128(i) => Primitive::I128(*i),
+            DefaultValue::I64(i) => Primitive::I64(*i),
+            DefaultValue::I32(i) => Primitive::I32(*i),
+            DefaultValue::U64(i) => Primitive::U64(*i),
+            DefaultValue::U32(i) => Primitive::U32(*i),
+            DefaultValue::F64(f) => Primitive::F64(*f),
+            DefaultValue::Str(s) => Primitive::Str(s.to_string()),
+            DefaultValue::Bool(b) => Primitive::Bool(*b),
+        }
+    }
+
+    pub fn kind(&self) -> PrimitiveKind {
+        match self {
+            DefaultValue::I128(_) => PrimitiveKind::I128,
+            DefaultValue::I64(_) => PrimitiveKind::I64,
+            DefaultValue::I32(_) => PrimitiveKind::I32,
+            DefaultValue::U64(_) => PrimitiveKind::U64,
+            DefaultValue::U32(_) => PrimitiveKind::U32,
+            DefaultValue::F64(_) => PrimitiveKind::F64,
+            DefaultValue::Str(_) => PrimitiveKind::Str,
+            DefaultValue::Bool(_) => PrimitiveKind::Bool,
+        }
+    }
+}
+
+impl<T> TryAs<T> for DefaultValue
+where
+    Primitive: TryAs<T>,
+{
+    type Error = <Primitive as TryAs<T>>::Error;
+    fn try_as(&self) -> StdResult<T, Self::Error> {
+        self.to_primitive().try_as()
+    }
+}
+
+impl TryAsRef<str> for DefaultValue {
+    type Error = PrimitiveTryAsError;
+    fn try_as_ref(&self) -> StdResult<&str, Self::Error> {
+        match self {
+            Self::Str(v) => Ok(v),
+            _ => Err(Self::Error::TypeMismatch {
+                kind: self.kind(),
+                target: "str".to_owned(),
+            }),
         }
     }
 }

@@ -13,7 +13,7 @@ use crate::ast;
 use crate::error::{Error, OptResult, Result};
 use crate::filter;
 use crate::primitive::{Primitive, PrimitiveKind, PrimitiveTryAsError};
-use crate::schema::{self, FieldSchema, TypeSchema};
+use crate::schema::{self, DefaultValue, FieldSchema, TypeSchema};
 use crate::util::{return_none_or_err, TryAs, TryAsRef};
 
 /// The sequence type returned by a field call.
@@ -241,7 +241,22 @@ impl<'a> FieldCallInfo<'a> {
         Primitive: TryAs<T, Error = PrimitiveTryAsError>,
         T: Copy,
     {
-        let literal = return_none_or_err!(self.opt_arg_literal(index, name));
+        let opt_literal = self.opt_arg_literal(index, name)?;
+
+        let Some(literal) = opt_literal else {
+            // We should have already checked that the param name is valid in validate_args().
+            let param_schema =  self.schema().param_by_name(name).unwrap_or_else(||
+                panic!("Invalid arg name {}", name)
+            );
+            let Some(default_value) = param_schema.default()  else {
+                return Ok(None);
+            };
+
+            match default_value.try_as() {
+                Ok(v) => return Ok(Some(v)),
+                Err(_) => self.invalid_default_arg_panic(name, &default_value),
+            }
+        };
 
         match literal.value.try_as() {
             Ok(v) => Ok(Some(v)),
@@ -284,11 +299,27 @@ impl<'a> FieldCallInfo<'a> {
     /// - A reference to the value of the argument if it is found in the AST.
     /// - `Error::ArgMissing`: if the argument is not found.
     /// - `Error::ArgTypeMismatch`: if the type of the argument does not match `T`.
-    pub fn opt_arg_ref<T: ?Sized>(&self, index: usize, name: &str) -> OptResult<&T>
+    pub fn opt_arg_ref<T: ?Sized + 'static>(&self, index: usize, name: &str) -> OptResult<&T>
     where
         Primitive: TryAsRef<T, Error = PrimitiveTryAsError>,
+        DefaultValue: TryAsRef<T, Error = PrimitiveTryAsError>,
     {
-        let literal = return_none_or_err!(self.opt_arg_literal(index, name));
+        let opt_literal = self.opt_arg_literal(index, name)?;
+
+        let Some(literal) = opt_literal else {
+            // We should have already checked that the param name is valid in validate_args().
+            let param_schema =  self.schema().param_by_name(name).unwrap_or_else(||
+                panic!("Invalid arg name {}", name)
+            );
+            let Some(default_value) = param_schema.default() else {
+                return Ok(None);
+            };
+
+            match default_value.try_as_ref() {
+                Ok(v) => return Ok(Some(v)),
+                Err(_) => self.invalid_default_arg_panic(name, &default_value),
+            }
+        };
 
         match literal.value.try_as_ref() {
             Ok(v) => Ok(Some(v)),
@@ -305,9 +336,10 @@ impl<'a> FieldCallInfo<'a> {
     ///
     /// This method acts like the `opt_arg_ref` method, except that it returns a `Result<&T>`
     /// rather than an `OptResult<&T>` and it returns an error if the argument is not found.
-    pub fn arg_ref<T: ?Sized>(&self, index: usize, name: &str) -> Result<&T>
+    pub fn arg_ref<T: ?Sized + 'static>(&self, index: usize, name: &str) -> Result<&T>
     where
         Primitive: TryAsRef<T, Error = PrimitiveTryAsError>,
+        DefaultValue: TryAsRef<T, Error = PrimitiveTryAsError>,
     {
         match self.opt_arg_ref(index, name) {
             Ok(Some(v)) => Ok(v),
@@ -433,6 +465,19 @@ impl<'a> FieldCallInfo<'a> {
                 .to_owned(),
             value,
         })
+    }
+
+    fn invalid_default_arg_panic<T>(&self, name: &str, value: &T) -> !
+    where
+        T: std::fmt::Debug,
+    {
+        panic!(
+            "Invalid default argument value {:?} for {} param of {}::{} in schema",
+            value,
+            name,
+            self.type_name(),
+            self.field_name(),
+        );
     }
 
     /// Create a `System` error for an error in the system layer corresponding to this field call.

@@ -31,8 +31,8 @@ impl SqOsStringTrait for SqOsString {
         Ok(Primitive::Str(self.to_str()?.to_owned()))
     }
 
-    fn string(&self, replace_invalid: Option<bool>) -> anyhow::Result<SqString> {
-        if replace_invalid.unwrap_or(false) {
+    fn string(&self, replace_invalid: bool) -> anyhow::Result<SqString> {
+        if replace_invalid {
             Ok(SqString::new(self.value.to_string_lossy().into_owned()))
         } else {
             Ok(SqString::new(self.to_str()?.to_owned()))
