@@ -42,6 +42,11 @@ pub trait TryAsRef<T: ?Sized> {
     fn try_as_ref(&self) -> StdResult<&T, Self::Error>;
 }
 
+pub trait TryAsStaticRef<T: ?Sized> {
+    type Error;
+    fn try_as_static_ref(&self) -> StdResult<&'static T, Self::Error>;
+}
+
 #[derive(Clone, Debug, Eq, PartialEq, ThisError)]
 #[error("Failed converting integer {value} from type {from} to type {to}")]
 pub struct ConvertIntError {

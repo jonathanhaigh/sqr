@@ -227,7 +227,7 @@ impl<'es> SchemaGenerator<'es> {
         let doc = Self::quote_doc(&param_ext.doc);
         let ty = self.quote_param_type(type_ext, field_ext, param_ext)?;
         let required = param_ext.required;
-        let default = self.quote_param_default_value(type_ext, field_ext, param_ext)?;
+        let opt_default = self.quote_param_opt_default_value(type_ext, field_ext, param_ext)?;
 
         Ok(quote! {
             #name => ParamSchema {
@@ -236,7 +236,7 @@ impl<'es> SchemaGenerator<'es> {
                 doc: #doc,
                 ty: #ty,
                 required: #required,
-                default: #default,
+                opt_default: #opt_default,
             }
         })
     }
@@ -296,42 +296,42 @@ impl<'es> SchemaGenerator<'es> {
     }
 
     /// Generate the internal schema representation of a default value for a parameter of a field.
-    fn quote_param_default_value(
+    fn quote_param_opt_default_value(
         &self,
         type_ext: &TypeExt,
         field_ext: &FieldExt,
         param_ext: &ParamExt,
     ) -> Result<TokenStream2> {
         match (param_ext.ty.as_str(), &param_ext.default_value) {
-            (_, JsonValue::Null) => Ok(quote! {DefaultValue::Null}),
-            ("Bool", JsonValue::Bool(b)) => Ok(quote! {DefaultValue::Bool(#b)}),
+            (_, JsonValue::Null) => Ok(quote! {None}),
+            ("Bool", JsonValue::Bool(b)) => Ok(quote! {Some(DefaultValue::Bool(#b))}),
             ("I128", JsonValue::Number(n)) if n.is_i64() => {
                 let i = i128::from(n.as_i64().unwrap());
-                Ok(quote! {DefaultValue::I128(#i)})
+                Ok(quote! {Some(DefaultValue::I128(#i))})
             }
             ("I64", JsonValue::Number(n)) if n.is_i64() => {
                 let i = n.as_i64().unwrap();
-                Ok(quote! {DefaultValue::I64(#i)})
+                Ok(quote! {Some(DefaultValue::I64(#i))})
             }
             ("I32", JsonValue::Number(n)) if n.is_i64() => {
                 let i = i32::try_from(n.as_i64().unwrap()).unwrap();
-                Ok(quote! {DefaultValue::I32(#i)})
+                Ok(quote! {Some(DefaultValue::I32(#i))})
             }
             ("U64", JsonValue::Number(n)) if n.is_i64() => {
                 let i = u64::try_from(n.as_i64().unwrap()).unwrap();
-                Ok(quote! {DefaultValue::U64(#i)})
+                Ok(quote! {Some(DefaultValue::U64(#i))})
             }
             ("U32", JsonValue::Number(n)) if n.is_i64() => {
                 let i = u32::try_from(n.as_i64().unwrap()).unwrap();
-                Ok(quote! {DefaultValue::U32(#i)})
+                Ok(quote! {Some(DefaultValue::U32(#i))})
             }
             // Note that serde_json::value::Number::is_f64() returns true only if the number is not
             // representable as a u64 or i64 so it wouldn't do what we want here.
             ("F64", JsonValue::Number(n)) if n.as_f64().is_some() => {
                 let f = n.as_f64().unwrap();
-                Ok(quote! {DefaultValue::F64(#f)})
+                Ok(quote! {Some(DefaultValue::F64(#f))})
             }
-            ("Str", JsonValue::String(s)) => Ok(quote! {DefaultValue::Str(#s)}),
+            ("Str", JsonValue::String(s)) => Ok(quote! {Some(DefaultValue::Str(#s))}),
             (tn, v) => Err(anyhow!(
                 "schema error at {}::{} param {}: default value {:?} is not a valid {:?}",
                 &type_ext.name,
@@ -422,7 +422,7 @@ impl<'es> SqTypeTraitGenerator<'es> {
             s => panic!("invalid param type {}", s),
         };
 
-        if !param_ext.required {
+        if param_ext.default_value.is_null() && !param_ext.required {
             param_type = quote! {Option<#param_type>};
         }
 
@@ -591,11 +591,12 @@ impl<'es> SqValueImplementor<'es> {
                     t => panic!("Unrecognized primitive type {}", t),
                 };
 
-                let arg_getter = match (pe.required, by_ref) {
-                    (true, true) => quote! {arg_ref},
-                    (true, false) => quote! {arg},
-                    (false, true) => quote! {opt_arg_ref},
-                    (false, false) => quote! {opt_arg},
+                let opt_arg = pe.default_value.is_null() && !pe.required;
+                let arg_getter = match (opt_arg, by_ref) {
+                    (false, true) => quote! {arg_ref},
+                    (false, false) => quote! {arg},
+                    (true, true) => quote! {opt_arg_ref},
+                    (true, false) => quote! {opt_arg},
                 };
 
                 quote! {

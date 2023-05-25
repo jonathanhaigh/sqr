@@ -36,12 +36,12 @@ impl SqRootTrait for SqRoot {
         Ok(Primitive::Str(String::from("root")))
     }
 
-    fn bool(&self, p_value: Option<bool>) -> anyhow::Result<SqBool> {
-        Ok(SqBool::new(p_value.unwrap_or(false)))
+    fn bool(&self, value: bool) -> anyhow::Result<SqBool> {
+        Ok(SqBool::new(value))
     }
 
-    fn path(&self, p_value: Option<&str>) -> anyhow::Result<SqPath> {
-        match p_value {
+    fn path(&self, value: Option<&str>) -> anyhow::Result<SqPath> {
+        match value {
             Some(s) => Ok(SqPath::new(PathBuf::from(s))),
             None => match env::current_dir() {
                 Ok(pb) => Ok(SqPath::new(pb)),
@@ -53,21 +53,18 @@ impl SqRootTrait for SqRoot {
         }
     }
 
-    fn int(&self, p_value: Option<i128>) -> anyhow::Result<SqInt> {
-        Ok(SqInt::new(p_value.unwrap_or(0)))
+    fn int(&self, value: i128) -> anyhow::Result<SqInt> {
+        Ok(SqInt::new(value))
     }
 
     fn ints(
         &self,
-        start: Option<i128>,
+        start: i128,
         stop: Option<i128>,
-        step: Option<i128>,
+        step: i128,
     ) -> anyhow::Result<SqValueSequence<SqInt>> {
-        let start = start.unwrap_or(0);
-        let step_i128 = step.unwrap_or(1);
-        let step: usize = step_i128
-            .try_into()
-            .map_err(|_| anyhow!("Failed to convert step option {} to usize type", step_i128))?;
+        let step = usize::try_from(step)
+            .map_err(|_| anyhow!("Failed to convert step option {} to usize type", step))?;
         ensure!(step > 0, "Invalid step option {}: must be > 0", step);
         // Only return an Iterator because:
         // * Range<i128> isn't an ExactSizeIterator because the size hint (a usize) might not be
@@ -83,25 +80,19 @@ impl SqRootTrait for SqRoot {
         }))
     }
 
-    fn string(&self, value: Option<&str>) -> anyhow::Result<SqString> {
-        Ok(SqString::new(value.unwrap_or("").to_owned()))
+    fn string(&self, value: &str) -> anyhow::Result<SqString> {
+        Ok(SqString::new(value.to_owned()))
     }
 
-    fn float(&self, value: Option<f64>) -> anyhow::Result<SqFloat> {
-        Ok(SqFloat::new(value.unwrap_or(0f64)))
+    fn float(&self, value: f64) -> anyhow::Result<SqFloat> {
+        Ok(SqFloat::new(value))
     }
 
-    fn duration(
-        &self,
-        s: Option<u64>,
-        ms: Option<u64>,
-        us: Option<u64>,
-        ns: Option<u64>,
-    ) -> anyhow::Result<SqDuration> {
-        let s_duration = Duration::from_secs(s.unwrap_or(0));
-        let ms_duration = Duration::from_millis(ms.unwrap_or(0));
-        let us_duration = Duration::from_micros(us.unwrap_or(0));
-        let ns_duration = Duration::from_nanos(ns.unwrap_or(0));
+    fn duration(&self, s: u64, ms: u64, us: u64, ns: u64) -> anyhow::Result<SqDuration> {
+        let s_duration = Duration::from_secs(s);
+        let ms_duration = Duration::from_millis(ms);
+        let us_duration = Duration::from_micros(us);
+        let ns_duration = Duration::from_nanos(ns);
 
         let opt_duration = s_duration
             .checked_add(ms_duration)
@@ -114,8 +105,8 @@ impl SqRootTrait for SqRoot {
         }
     }
 
-    fn data_size(&self, value: Option<u64>) -> anyhow::Result<SqDataSize> {
-        Ok(SqDataSize::new(value.unwrap_or(0)))
+    fn data_size(&self, value: u64) -> anyhow::Result<SqDataSize> {
+        Ok(SqDataSize::new(value))
     }
 
     fn user(&self, opt_username: Option<&str>, opt_uid: Option<u32>) -> anyhow::Result<SqUser> {
