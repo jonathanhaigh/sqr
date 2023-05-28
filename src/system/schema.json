@@ -19,7 +19,15 @@
             "name": "SqInt",
             "doc": "A 128-bit signed integer",
             "primitive_coercion": "I128",
-            "fields": []
+            "fields": [
+                {
+                    "name": "string",
+                    "doc": "Format the integer as a string",
+                    "return_type": "SqString",
+                    "return_sequence_type": "Single",
+                    "params": []
+                }
+            ]
         },
         {
             "name": "SqFloat",
