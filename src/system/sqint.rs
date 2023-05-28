@@ -3,7 +3,7 @@
 // SPDX-License-Identifier: MIT
 
 use crate::primitive::Primitive;
-use crate::system::SqIntTrait;
+use crate::system::{sqstring::SqString, SqIntTrait};
 
 pub struct SqInt {
     value: i128,
@@ -18,6 +18,10 @@ impl SqInt {
 impl SqIntTrait for SqInt {
     fn to_primitive(&self) -> anyhow::Result<Primitive> {
         Ok(Primitive::I128(self.value))
+    }
+
+    fn string(&self) -> anyhow::Result<SqString> {
+        Ok(SqString::new(self.value.to_string()))
     }
 }
 
