@@ -65,6 +65,8 @@ impl<'a> FieldCallInfo<'a> {
     pub fn new(ast: &'a ast::FieldCall, schema: &'static FieldSchema) -> Result<Self> {
         // TODO: check that filters are valid. This is currently done at the time the filter is
         // used when generating results, but we could catch errors earlier.
+        // TODO: check that a filter isn't being applied to a field that has return sequence type
+        // different to "Sequence".
         let ret = Self { ast, schema };
         ret.validate_args()?;
 
@@ -203,6 +205,11 @@ impl<'a> FieldCallInfo<'a> {
         Ok(())
     }
 
+    /// Get the (optional) AST node for the literal value of an argument.
+    ///
+    /// # Parameters
+    /// - `index`: the index of the parameter to get the argument for.
+    /// - `name`: the name of the parameter to get the argument for.
     fn opt_arg_literal(&self, index: usize, name: &str) -> OptResult<&ast::Literal> {
         let arg_pack = return_none_or_err!(Ok(self.ast.opt_arg_pack.as_ref()));
 
@@ -401,6 +408,12 @@ impl<'a> FieldCallInfo<'a> {
         })
     }
 
+    /// Create a `TooManyArgs` error for when too many arguments are given for the field call.
+    ///
+    /// # Parameters
+    /// - `arg_pack`: the AST node of the argument pack.
+    /// - `expecting`: the maximum expected number of arguments.
+    /// - `got`: the number of arguments given.
     fn too_many_args_error(
         &self,
         arg_pack: &ast::ArgPack,
@@ -416,6 +429,10 @@ impl<'a> FieldCallInfo<'a> {
         })
     }
 
+    /// Create an `InvalidArgName` error for when a named argument name is invalid.
+    ///
+    /// # Parameters
+    /// - `arg`: the AST node representing the named argument.
     fn invalid_arg_name_error(&self, arg: &ast::NamedArg) -> Box<Error> {
         Box::new(Error::InvalidArgName {
             span: arg.ident.span,
@@ -425,6 +442,12 @@ impl<'a> FieldCallInfo<'a> {
         })
     }
 
+    /// Create a `RepeatedArg` error for when an argument is repeated in the field call.
+    ///
+    /// # Parameters
+    /// - `name`: the name of the argument.
+    /// - `span`: the span of the second use of the argument.
+    /// - `prev_span`: the span of the first use of the argument.
     fn repeated_arg_error(
         &self,
         name: &str,
@@ -467,6 +490,7 @@ impl<'a> FieldCallInfo<'a> {
         })
     }
 
+    /// Panic when a default argument value from the schema is invalid.
     fn invalid_default_arg_panic<T>(&self, name: &str, value: &T) -> !
     where
         T: std::fmt::Debug,
