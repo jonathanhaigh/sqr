@@ -44,3 +44,8 @@ jobs:
         token: ${{ secrets.CODECOV_TOKEN }} # not required for public repos
         files: lcov.info
         fail_ci_if_error: true
+    - name: Run security audit
+      run: |
+        sudo apt install -y libssl-dev
+        cargo install cargo-audit
+        cargo audit --deny warnings
