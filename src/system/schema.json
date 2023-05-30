@@ -25,7 +25,112 @@
                     "doc": "Format the integer as a string",
                     "return_type": "SqString",
                     "return_sequence_type": "Single",
-                    "params": []
+                    "params": [
+                        {
+                            "index": 0,
+                            "name": "radix",
+                            "doc": "The base of the number system to use, maximum 36",
+                            "type": "U32",
+                            "required": false,
+                            "default_value": 10
+                        },
+                        {
+                            "index": 1,
+                            "name": "twos_complement",
+                            "doc": "Format negative integers in two's complement representation",
+                            "type": "Bool",
+                            "required": false,
+                            "default_value": false
+                        },
+                        {
+                            "index": 2,
+                            "name": "upper_case",
+                            "doc": "Use upper case letters for digits",
+                            "type": "Bool",
+                            "required": false,
+                            "default_value": false
+                        }
+                    ]
+                },
+                {
+                    "name": "binary",
+                    "doc": "Format the integer as a binary string",
+                    "return_type": "SqString",
+                    "return_sequence_type": "Single",
+                    "params": [
+                        {
+                            "index": 0,
+                            "name": "prefix_radix",
+                            "doc": "Add a \"0b\" prefix to the output",
+                            "type": "Bool",
+                            "required": false,
+                            "default_value": false
+                        },
+                        {
+                            "index": 1,
+                            "name": "twos_complement",
+                            "doc": "Format negative integers in two's complement representation",
+                            "type": "Bool",
+                            "required": false,
+                            "default_value": false
+                        }
+                    ]
+                },
+                {
+                    "name": "octal",
+                    "doc": "Format the integer as an octal string",
+                    "return_type": "SqString",
+                    "return_sequence_type": "Single",
+                    "params": [
+                        {
+                            "index": 0,
+                            "name": "prefix_radix",
+                            "doc": "Add a \"0o\" prefix to the output",
+                            "type": "Bool",
+                            "required": false,
+                            "default_value": false
+                        },
+                        {
+                            "index": 1,
+                            "name": "twos_complement",
+                            "doc": "Format negative integers in two's complement representation",
+                            "type": "Bool",
+                            "required": false,
+                            "default_value": false
+                        }
+                    ]
+                },
+                {
+                    "name": "hexadecimal",
+                    "doc": "Format the integer as a hexadecimal string",
+                    "return_type": "SqString",
+                    "return_sequence_type": "Single",
+                    "params": [
+                        {
+                            "index": 0,
+                            "name": "prefix_radix",
+                            "doc": "Add a \"0x\" prefix to the output",
+                            "type": "Bool",
+                            "required": false,
+                            "default_value": false
+                        },
+                        {
+                            "index": 1,
+                            "name": "twos_complement",
+                            "doc": "Format negative integers in two's complement representation",
+                            "type": "Bool",
+                            "required": false,
+                            "default_value": false
+                        },
+                        {
+                            "index": 2,
+                            "name": "upper_case",
+                            "doc": "Use upper case letters for digits",
+                            "type": "Bool",
+                            "required": false,
+                            "default_value": false
+                        }
+                    ]
                 }
             ]
         },
