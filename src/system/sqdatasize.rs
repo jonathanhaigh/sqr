@@ -75,3 +75,12 @@ impl SqDataSizeTrait for SqDataSize {
         Ok(SqFloat::new(self.value as f64 / PB))
     }
 }
+
+impl<T> From<T> for SqDataSize
+where
+    u64: From<T>,
+{
+    fn from(value: T) -> Self {
+        Self::new(u64::from(value))
+    }
+}

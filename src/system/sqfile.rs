@@ -9,8 +9,8 @@ use nix::sys::stat;
 
 use crate::primitive::Primitive;
 use crate::system::{
-    sqdatasize::SqDataSize, sqfilemode::SqFileMode, sqgroup::SqGroup, sqint::SqInt,
-    sqstring::SqString, sqsystemtime::SqSystemTime, squser::SqUser, SqFileTrait,
+    sqdatasize::SqDataSize, sqfilemode::SqFileMode, sqfilesystem::SqFilesystem, sqgroup::SqGroup,
+    sqint::SqInt, sqstring::SqString, sqsystemtime::SqSystemTime, squser::SqUser, SqFileTrait,
 };
 
 pub struct SqFile {
@@ -133,5 +133,9 @@ impl SqFileTrait for SqFile {
 
     fn group(&self) -> anyhow::Result<SqGroup> {
         SqGroup::from_gid(self.stat.st_gid)
+    }
+
+    fn filesystem(&self) -> anyhow::Result<SqFilesystem> {
+        SqFilesystem::from_path(self.path.as_ref())
     }
 }
