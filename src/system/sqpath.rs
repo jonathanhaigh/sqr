@@ -13,7 +13,8 @@ use walkdir::WalkDir;
 use crate::primitive::Primitive;
 use crate::sqvalue::SqValueSequence;
 use crate::system::{
-    sqbool::SqBool, sqfile::SqFile, sqosstring::SqOsString, sqstring::SqString, SqPathTrait,
+    sqbool::SqBool, sqfile::SqFile, sqfilesystem::SqFilesystem, sqosstring::SqOsString,
+    sqstring::SqString, SqPathTrait,
 };
 
 pub struct SqPath {
@@ -142,5 +143,9 @@ impl SqPathTrait for SqPath {
                 e
             )),
         }
+    }
+
+    fn filesystem(&self) -> anyhow::Result<SqFilesystem> {
+        SqFilesystem::from_path(self.path.as_ref())
     }
 }

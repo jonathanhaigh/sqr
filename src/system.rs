@@ -11,6 +11,7 @@ pub mod sqdatasize;
 pub mod sqduration;
 pub mod sqfile;
 pub mod sqfilemode;
+pub mod sqfilesystem;
 pub mod sqfloat;
 pub mod sqgroup;
 pub mod sqint;

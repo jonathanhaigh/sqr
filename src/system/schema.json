@@ -518,6 +518,13 @@
                             "default_value": true
                         }
                     ]
+                },
+                {
+                    "name": "filesystem",
+                    "doc": "Get the filesystem on which the path resides",
+                    "return_type": "SqFilesystem",
+                    "return_sequence_type": "Single",
+                    "params": []
                 }
             ]
         },
@@ -601,6 +608,90 @@
                     "name": "group",
                     "doc": "Get the file's group",
                     "return_type": "SqGroup",
+                    "return_sequence_type": "Single",
+                    "params": []
+                },
+                {
+                    "name": "filesystem",
+                    "doc": "Get the file's filesystem",
+                    "return_type": "SqFilesystem",
+                    "return_sequence_type": "Single",
+                    "params": []
+                }
+            ]
+        },
+        {
+            "name": "SqFilesystem",
+            "doc": "A filesystem",
+            "primitive_coercion": "U64",
+            "fields": [
+                {
+                    "name": "id",
+                    "doc": "Get the ID of the filesystem (according to statvfs(3))",
+                    "return_type": "SqInt",
+                    "return_sequence_type": "Single",
+                    "params": []
+                },
+                {
+                    "name": "block_size",
+                    "doc": "Get the block size of the filesystem",
+                    "return_type": "SqDataSize",
+                    "return_sequence_type": "Single",
+                    "params": []
+                },
+                {
+                    "name": "blocks",
+                    "doc": "Get the number of blocks on the filesystem",
+                    "return_type": "SqInt",
+                    "return_sequence_type": "Single",
+                    "params": []
+                },
+                {
+                    "name": "blocks_available",
+                    "doc": "Get the number of available blocks on the filesystem",
+                    "return_type": "SqInt",
+                    "return_sequence_type": "Single",
+                    "params": []
+                },
+                {
+                    "name": "blocks_used",
+                    "doc": "Get the number of used blocks on the filesystem",
+                    "return_type": "SqInt",
+                    "return_sequence_type": "Single",
+                    "params": []
+                },
+                {
+                    "name": "size",
+                    "doc": "Get the size of the filesystem",
+                    "return_type": "SqDataSize",
+                    "return_sequence_type": "Single",
+                    "params": []
+                },
+                {
+                    "name": "space_available",
+                    "doc": "Get the amount of available space on the filesystem",
+                    "return_type": "SqDataSize",
+                    "return_sequence_type": "Single",
+                    "params": []
+                },
+                {
+                    "name": "space_used",
+                    "doc": "Get the amount of used space on the filesystem",
+                    "return_type": "SqDataSize",
+                    "return_sequence_type": "Single",
+                    "params": []
+                },
+                {
+                    "name": "percent_available",
+                    "doc": "Get the percentage space on the filesystem that is available",
+                    "return_type": "SqFloat",
+                    "return_sequence_type": "Single",
+                    "params": []
+                },
+                {
+                    "name": "percent_used",
+                    "doc": "Get the percentage space on the filesystem that is used",
+                    "return_type": "SqFloat",
                     "return_sequence_type": "Single",
                     "params": []
                 }
